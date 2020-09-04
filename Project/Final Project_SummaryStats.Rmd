@@ -1,0 +1,143 @@
+---
+title: 'Final Project: Summary Statistics'
+author: "David Aarhus"
+date: "4/23/2020"
+output: word_document
+---
+
+This should include a summary table of means, max, mins, and standard deviations; data transformations performed for feature engineering, as well as at least five plots revealing interesting patterns to be studied. These must be motivated by the analysis – they cannot just be random plots.
+
+Needs improvement:
+
+Clarify for the final report:
+
+
+What are the sensitivity and specificity in the classification model?
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls()) #removing all variables
+```
+
+#Libraries
+```{r}
+library("tidyverse")
+library("ggplot2")
+library("caret")
+library("doBy")
+```
+
+```{r}
+rm(list = ls()) #removing all variables
+```
+
+#Loads in Data
+```{r}
+suicide <- read.csv("/Users/DavidAarhus/Documents/310 R/Datasets/suicide.csv")
+names(suicide)
+```
+
+#Data Transformation
+```{r}
+#remove meaning less columns (HDI.for.year)
+suicide$HDI.for.year <- NULL
+suicide$country.year <- NULL
+#create new column (gdpM, gdpB, suicide_hvy)
+suicide$gdpM <- suicide$gdp_for_year..../1e+6
+suicide$gdpB <- suicide$gdp_for_year..../1e+9
+suicide$pop100000 <- suicide$population*1e-5
+suicide$suicide_rate_per100000capita <- suicide$pop100000/suicide$suicides_no
+
+#identified whether a country was suicide heavy or not by first running summary statistics on the dataset to find the average suicide count from each country. 
+suicide$suicide_hvy <- ifelse(suicide$suicide_rate_per100000capita > 0.56, 1, 0)
+
+
+NaRV.omit <- function(x){
+  ## Author: Rene Locher
+  ## Version: 2005-10-17
+
+  if (is.vector(x)) {
+    if (is.numeric(x)) x <- na.omit(x[is.finite(x)]) else
+    x <- na.omit(x)
+  } else if (is.factor(x)) {
+    x <- na.omit(x)
+  } else if (is.data.frame(x)) {
+    x.num <- as.matrix(x[,sapply(x, is.numeric)])
+    ri <- (!apply(x.num, MARGIN = 1,
+                  function(x) sum(is.infinite(x))>0) &
+           !apply(x, MARGIN = 1, function(x) sum(is.na(x))>0))
+    x <- x[ri,,drop=FALSE]
+    ## class omit is incompatible with class data.frame
+    ## attributes(x) <- c(attributes(x),list(na.action=which(!ri),class="omit"))
+  } else if (is.matrix(x)) {
+    if(is.numeric(x)) {
+      ri <- !apply(x, MARGIN = 1,
+                   function(x) {sum(is.na(x)|is.infinite(x))>0})
+      x <- x[ri,,drop=FALSE]
+      attributes(x) <- c(attributes(x),list(na.action=which(!ri),class="omit"))
+    } else x <- na.omit(x)
+  } else {
+    warning("'x' is neither a vector, nor a factor, nor a data.frame nor a matrix. \n'x' is returned unchanged\n")
+    return(x)
+  }
+  return(x)
+}## NaRV.omit
+
+suicide <- NaRV.omit(suicide)
+
+```
+
+
+#Summary tables
+```{r}
+summary(suicide)
+
+#sum(suicide$suicide_hvy==1)
+#4368
+```
+
+
+```{r}
+summaryBy(suicides_no ~ country, suicide, FUN = mean)
+```
+```{r}
+summaryBy(gdpB ~ country, suicide, FUN = mean)
+```
+
+```{r}
+summaryBy(suicides_no ~ sex, suicide, FUN = mean)
+```
+
+#GGPLOTS
+```{r}
+ggplot(suicide, aes(generation)) +
+  geom_bar(aes(fill = sex)) +
+  labs(x = " ", y = "Count", title = "Suicide Totals vs Generations")
+```
+
+```{r}
+ggplot(suicide, aes(suicides.100k.pop, gdpB)) +
+  geom_point(aes(color = age)) +
+  labs(x = "Suicides per 100k pop ", y = "GDP (Billions)", title = "GDP (Billions) vs Suicides per 100k pop")
+
+```
+
+```{r}
+ggplot(suicide, aes(year, suicides_no)) +
+  geom_point(aes(color = sex)) +
+  labs(x = "Year", y = "Suicide Count", title = "Suicides vs Year")
+
+```
+
+```{r}
+ggplot(suicide, aes(population, suicides.100k.pop )) +
+  geom_point(aes(color = generation)) +
+    labs(x = "Population", y = "Suicides per 100k pop", title = "Suicides per 100k pop Vs Population")
+```
+
+```{r}
+ggplot(suicide, aes(year, suicides.100k.pop)) +
+  geom_point(aes(color = generation)) +
+  labs(x = "Year", y = "Suicides per 100k pop", title = "Suicides per 100k pop Vs Year")
+
+```

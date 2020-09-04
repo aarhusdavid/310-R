@@ -1,0 +1,467 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\usepackage{hyperref}
+\hypersetup{
+            pdftitle={ProblemSet7.R},
+            pdfauthor={DavidAarhus},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\title{ProblemSet7.R}
+\author{DavidAarhus}
+\date{2020-04-12}
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{rm}\NormalTok{(}\DataTypeTok{list =} \KeywordTok{ls}\NormalTok{()) }\CommentTok{#removing all variables}
+\CommentTok{#a) Navigate to the UCI Machine Learning website and download the data folder for the Bike Sharing Dataset. Read the file day.csv into R using read.csv and store it as the object Bike_DF. Read the description to get familiar with the variables.}
+\NormalTok{ Bike_DF <-}\StringTok{ }\KeywordTok{read.csv}\NormalTok{(}\StringTok{"/Users/DavidAarhus/Documents/310 R/Datasets/day.csv"}\NormalTok{)}
+  
+
+\CommentTok{#b) Do some basic data cleaning on Bike_DF to ensure factor variables are recorded as factors. Then run the command sapply(Bike_DF, is.factor) to ensure the columns in your data frame that should be factors have been converted to factors appropriately. (Hint: the predictors weather situation, season,year, month, holiday, weekday, and workingday should be factor.)}
+                                                                                                                                                                                                                                                             
+\KeywordTok{library}\NormalTok{(}\StringTok{"tidyverse"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## -- Attaching packages ---------------------------------------------- tidyverse 1.3.0 --
+\end{verbatim}
+
+\begin{verbatim}
+## v ggplot2 3.2.1     v purrr   0.3.3
+## v tibble  2.1.3     v dplyr   0.8.3
+## v tidyr   1.0.0     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.5.0
+\end{verbatim}
+
+\begin{verbatim}
+## -- Conflicts ------------------------------------------------- tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"forcats"}\NormalTok{)}
+
+\NormalTok{Bike_DF}\OperatorTok{$}\NormalTok{season <-}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Bike_DF}\OperatorTok{$}\NormalTok{season)}
+\NormalTok{Bike_DF}\OperatorTok{$}\NormalTok{workingday <-}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Bike_DF}\OperatorTok{$}\NormalTok{workingday)}
+\NormalTok{Bike_DF}\OperatorTok{$}\NormalTok{holiday <-}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Bike_DF}\OperatorTok{$}\NormalTok{holiday)}
+\NormalTok{Bike_DF}\OperatorTok{$}\NormalTok{weathersit <-}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Bike_DF}\OperatorTok{$}\NormalTok{weathersit)}
+\NormalTok{Bike_DF}\OperatorTok{$}\NormalTok{yr <-}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Bike_DF}\OperatorTok{$}\NormalTok{yr)}
+\NormalTok{Bike_DF}\OperatorTok{$}\NormalTok{mnth <-}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Bike_DF}\OperatorTok{$}\NormalTok{mnth)}
+\NormalTok{Bike_DF}\OperatorTok{$}\NormalTok{weekday <-}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Bike_DF}\OperatorTok{$}\NormalTok{weekday)}
+
+\KeywordTok{sapply}\NormalTok{(Bike_DF, is.factor)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    instant     dteday     season         yr       mnth    holiday    weekday 
+##      FALSE       TRUE       TRUE       TRUE       TRUE       TRUE       TRUE 
+## workingday weathersit       temp      atemp        hum  windspeed     casual 
+##       TRUE       TRUE      FALSE      FALSE      FALSE      FALSE      FALSE 
+## registered        cnt 
+##      FALSE      FALSE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#c) We now perform some feature transformation (creation of derived variables). }
+ 
+\NormalTok{Bike_DF <-}\StringTok{ }\NormalTok{Bike_DF }\OperatorTok{%>%}\StringTok{ }\KeywordTok{select}\NormalTok{(}\OperatorTok{-}\NormalTok{instant)}
+\NormalTok{Bike_DF <-}\StringTok{ }\NormalTok{Bike_DF }\OperatorTok{%>%}\StringTok{ }\KeywordTok{select}\NormalTok{(}\OperatorTok{-}\NormalTok{dteday)}
+
+  
+\CommentTok{#Create 4 new variables as squared terms of temperature, feeling temperature, humidity, and windspeed. Refer to data description to find the corresponding predictors in the data.}
+ 
+\NormalTok{Bike_DF <-}\StringTok{ }\NormalTok{Bike_DF }\OperatorTok{%>%}\StringTok{ }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{temp_sq =}\NormalTok{ temp }\OperatorTok{*}\StringTok{ }\NormalTok{temp,}
+                              \DataTypeTok{atemp_sq =}\NormalTok{ atemp }\OperatorTok{*}\StringTok{ }\NormalTok{atemp,}
+                              \DataTypeTok{hum_sq =}\NormalTok{ hum }\OperatorTok{*}\StringTok{ }\NormalTok{hum,}
+                              \DataTypeTok{windspeed_sq =}\NormalTok{ windspeed }\OperatorTok{*}\StringTok{ }\NormalTok{windspeed)}
+  
+
+\CommentTok{#d) Split our data into test and training splits of size 30%/70% each. Use 310 as the seed number.}
+ 
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{310}\NormalTok{)}
+\NormalTok{train_idx <-}\StringTok{ }\KeywordTok{sample}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\KeywordTok{nrow}\NormalTok{(Bike_DF),}\DataTypeTok{size =} \FloatTok{0.7}\OperatorTok{*}\KeywordTok{nrow}\NormalTok{(Bike_DF),}\DataTypeTok{replace=}\OtherTok{FALSE}\NormalTok{)}
+\NormalTok{Bike_train <-}\StringTok{ }\NormalTok{Bike_DF[train_idx,]}
+\NormalTok{Bike_test <-}\StringTok{ }\NormalTok{Bike_DF[}\OperatorTok{-}\NormalTok{train_idx,]}
+  
+
+\CommentTok{#e) Fit a forward stepwise linear model on the training data with cnt as your outcome variable, and season, holiday, month, workingday, weathersit, temp, atemp, hum, windspeed, and the four squared terms, as your predcitor varaibles. Set max number of variables to 20. Note we end up with more variables because of factor variables. Save this as an object fwd_fit.}
+ 
+\KeywordTok{library}\NormalTok{(}\StringTok{"leaps"}\NormalTok{)}
+\NormalTok{fwd_fit <-}\StringTok{ }\KeywordTok{regsubsets}\NormalTok{(cnt }\OperatorTok{~}\StringTok{ }\NormalTok{season }\OperatorTok{+}\StringTok{ }\NormalTok{holiday }\OperatorTok{+}\StringTok{ }\NormalTok{mnth }\OperatorTok{+}\StringTok{ }\NormalTok{workingday }\OperatorTok{+}\StringTok{ }\NormalTok{weathersit }\OperatorTok{+}\StringTok{ }\NormalTok{temp }\OperatorTok{+}\StringTok{ }\NormalTok{hum }\OperatorTok{+}\StringTok{ }\NormalTok{windspeed,}
+                      \DataTypeTok{data =}\NormalTok{ Bike_train,}
+                      \DataTypeTok{method =} \StringTok{"forward"}\NormalTok{,}
+                      \DataTypeTok{nvmax =} \DecValTok{20}\NormalTok{)}
+  
+\CommentTok{#f) Run the summary command over fwd_fit. What are the first five variables selected? Use the plot command to show variables selected. Hint: use scale="adjr2" to sort the models based on the adjusterd R2.}
+ 
+\KeywordTok{summary}\NormalTok{(fwd_fit)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Subset selection object
+## Call: regsubsets.formula(cnt ~ season + holiday + mnth + workingday + 
+##     weathersit + temp + hum + windspeed, data = Bike_train, method = "forward", 
+##     nvmax = 20)
+## 21 Variables  (and intercept)
+##             Forced in Forced out
+## season2         FALSE      FALSE
+## season3         FALSE      FALSE
+## season4         FALSE      FALSE
+## holiday1        FALSE      FALSE
+## mnth2           FALSE      FALSE
+## mnth3           FALSE      FALSE
+## mnth4           FALSE      FALSE
+## mnth5           FALSE      FALSE
+## mnth6           FALSE      FALSE
+## mnth7           FALSE      FALSE
+## mnth8           FALSE      FALSE
+## mnth9           FALSE      FALSE
+## mnth10          FALSE      FALSE
+## mnth11          FALSE      FALSE
+## mnth12          FALSE      FALSE
+## workingday1     FALSE      FALSE
+## weathersit2     FALSE      FALSE
+## weathersit3     FALSE      FALSE
+## temp            FALSE      FALSE
+## hum             FALSE      FALSE
+## windspeed       FALSE      FALSE
+## 1 subsets of each size up to 20
+## Selection Algorithm: forward
+##           season2 season3 season4 holiday1 mnth2 mnth3 mnth4 mnth5 mnth6 mnth7
+## 1  ( 1 )  " "     " "     " "     " "      " "   " "   " "   " "   " "   " "  
+## 2  ( 1 )  " "     " "     "*"     " "      " "   " "   " "   " "   " "   " "  
+## 3  ( 1 )  " "     " "     "*"     " "      " "   " "   " "   " "   " "   " "  
+## 4  ( 1 )  " "     " "     "*"     " "      " "   " "   " "   " "   " "   " "  
+## 5  ( 1 )  "*"     " "     "*"     " "      " "   " "   " "   " "   " "   " "  
+## 6  ( 1 )  "*"     " "     "*"     " "      " "   " "   " "   " "   " "   " "  
+## 7  ( 1 )  "*"     " "     "*"     " "      " "   " "   " "   " "   " "   " "  
+## 8  ( 1 )  "*"     " "     "*"     " "      " "   " "   " "   " "   " "   " "  
+## 9  ( 1 )  "*"     " "     "*"     " "      " "   " "   " "   " "   " "   " "  
+## 10  ( 1 ) "*"     " "     "*"     " "      " "   " "   " "   " "   " "   "*"  
+## 11  ( 1 ) "*"     " "     "*"     " "      " "   "*"   " "   " "   " "   "*"  
+## 12  ( 1 ) "*"     " "     "*"     " "      " "   "*"   " "   " "   " "   "*"  
+## 13  ( 1 ) "*"     " "     "*"     " "      " "   "*"   " "   " "   "*"   "*"  
+## 14  ( 1 ) "*"     " "     "*"     "*"      " "   "*"   " "   " "   "*"   "*"  
+## 15  ( 1 ) "*"     "*"     "*"     "*"      " "   "*"   " "   " "   "*"   "*"  
+## 16  ( 1 ) "*"     "*"     "*"     "*"      " "   "*"   " "   " "   "*"   "*"  
+## 17  ( 1 ) "*"     "*"     "*"     "*"      " "   "*"   " "   " "   "*"   "*"  
+## 18  ( 1 ) "*"     "*"     "*"     "*"      " "   "*"   " "   " "   "*"   "*"  
+## 19  ( 1 ) "*"     "*"     "*"     "*"      " "   "*"   "*"   " "   "*"   "*"  
+## 20  ( 1 ) "*"     "*"     "*"     "*"      "*"   "*"   "*"   " "   "*"   "*"  
+##           mnth8 mnth9 mnth10 mnth11 mnth12 workingday1 weathersit2 weathersit3
+## 1  ( 1 )  " "   " "   " "    " "    " "    " "         " "         " "        
+## 2  ( 1 )  " "   " "   " "    " "    " "    " "         " "         " "        
+## 3  ( 1 )  " "   " "   " "    " "    " "    " "         " "         " "        
+## 4  ( 1 )  " "   " "   " "    " "    " "    " "         " "         " "        
+## 5  ( 1 )  " "   " "   " "    " "    " "    " "         " "         " "        
+## 6  ( 1 )  " "   "*"   " "    " "    " "    " "         " "         " "        
+## 7  ( 1 )  " "   "*"   " "    " "    " "    " "         " "         "*"        
+## 8  ( 1 )  " "   "*"   " "    " "    " "    "*"         " "         "*"        
+## 9  ( 1 )  " "   "*"   "*"    " "    " "    "*"         " "         "*"        
+## 10  ( 1 ) " "   "*"   "*"    " "    " "    "*"         " "         "*"        
+## 11  ( 1 ) " "   "*"   "*"    " "    " "    "*"         " "         "*"        
+## 12  ( 1 ) " "   "*"   "*"    " "    " "    "*"         "*"         "*"        
+## 13  ( 1 ) " "   "*"   "*"    " "    " "    "*"         "*"         "*"        
+## 14  ( 1 ) " "   "*"   "*"    " "    " "    "*"         "*"         "*"        
+## 15  ( 1 ) " "   "*"   "*"    " "    " "    "*"         "*"         "*"        
+## 16  ( 1 ) " "   "*"   "*"    "*"    " "    "*"         "*"         "*"        
+## 17  ( 1 ) "*"   "*"   "*"    "*"    " "    "*"         "*"         "*"        
+## 18  ( 1 ) "*"   "*"   "*"    "*"    "*"    "*"         "*"         "*"        
+## 19  ( 1 ) "*"   "*"   "*"    "*"    "*"    "*"         "*"         "*"        
+## 20  ( 1 ) "*"   "*"   "*"    "*"    "*"    "*"         "*"         "*"        
+##           temp hum windspeed
+## 1  ( 1 )  "*"  " " " "      
+## 2  ( 1 )  "*"  " " " "      
+## 3  ( 1 )  "*"  "*" " "      
+## 4  ( 1 )  "*"  "*" "*"      
+## 5  ( 1 )  "*"  "*" "*"      
+## 6  ( 1 )  "*"  "*" "*"      
+## 7  ( 1 )  "*"  "*" "*"      
+## 8  ( 1 )  "*"  "*" "*"      
+## 9  ( 1 )  "*"  "*" "*"      
+## 10  ( 1 ) "*"  "*" "*"      
+## 11  ( 1 ) "*"  "*" "*"      
+## 12  ( 1 ) "*"  "*" "*"      
+## 13  ( 1 ) "*"  "*" "*"      
+## 14  ( 1 ) "*"  "*" "*"      
+## 15  ( 1 ) "*"  "*" "*"      
+## 16  ( 1 ) "*"  "*" "*"      
+## 17  ( 1 ) "*"  "*" "*"      
+## 18  ( 1 ) "*"  "*" "*"      
+## 19  ( 1 ) "*"  "*" "*"      
+## 20  ( 1 ) "*"  "*" "*"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot}\NormalTok{(fwd_fit, }\DataTypeTok{scale=}\StringTok{"adjr2"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{ProblemSet7_files/figure-latex/unnamed-chunk-1-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#g) Fit a Ridge model against the bike_train dataset. Call the plot function against the fitted model to see how MSE varies as we move λ.}
+ 
+\KeywordTok{library}\NormalTok{(}\StringTok{"glmnet"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: Matrix
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'Matrix'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:tidyr':
+## 
+##     expand, pack, unpack
+\end{verbatim}
+
+\begin{verbatim}
+## Loaded glmnet 3.0-2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(}\StringTok{"glmnetUtils"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Attaching package: 'glmnetUtils'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:glmnet':
+## 
+##     cv.glmnet, glmnet
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ridge_fit <-}\StringTok{ }\KeywordTok{cv.glmnet}\NormalTok{(cnt }\OperatorTok{~}\StringTok{ }\NormalTok{season }\OperatorTok{+}\StringTok{ }\NormalTok{holiday }\OperatorTok{+}\StringTok{ }\NormalTok{mnth }\OperatorTok{+}\StringTok{ }\NormalTok{workingday }\OperatorTok{+}\StringTok{ }\NormalTok{weathersit }\OperatorTok{+}\StringTok{ }\NormalTok{temp }\OperatorTok{+}\StringTok{ }\NormalTok{hum }\OperatorTok{+}\StringTok{ }\NormalTok{windspeed,}
+                       \DataTypeTok{data =}\NormalTok{ Bike_train,}
+                       \DataTypeTok{alpha =} \DecValTok{0}\NormalTok{,}
+                       \DataTypeTok{nfolds =} \DecValTok{10}\NormalTok{)}
+\KeywordTok{plot}\NormalTok{(ridge_fit)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{ProblemSet7_files/figure-latex/unnamed-chunk-1-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#h) What are the values for lambda.min and lambda.1se? What is the meaning of each of these lambdas?}
+  
+  \CommentTok{#lambda.min = 118.0217}
+  \CommentTok{#lambda.1se = 476.4557}
+  
+  \CommentTok{#These lambdas decide how much we care about bias vs variance. Because our lambdas are pretty big, overall we are choosing to increase our bias a little bit in exchange for less variance.}
+  
+  
+\CommentTok{#i) Print the value of the coefficients at lambda.min and lambda.1se. What do you notice about the differenecs between the coefficients. (Note: you will need to type as.matrix(coef(ridge_fit, s = "lambda.min")) to convert the coefficient vector from a sparse data matrix to a matrix.}
+                                                                                                                                            
+\NormalTok{lasso_mod <-}\StringTok{ }\KeywordTok{cv.glmnet}\NormalTok{(cnt }\OperatorTok{~}\StringTok{ }\NormalTok{season }\OperatorTok{+}\StringTok{ }\NormalTok{holiday }\OperatorTok{+}\StringTok{ }\NormalTok{mnth }\OperatorTok{+}\StringTok{ }\NormalTok{workingday }\OperatorTok{+}\StringTok{ }\NormalTok{weathersit }\OperatorTok{+}\StringTok{ }\NormalTok{temp }\OperatorTok{+}\StringTok{ }\NormalTok{hum }\OperatorTok{+}\StringTok{ }\NormalTok{windspeed,}
+                       \DataTypeTok{data =}\NormalTok{ Bike_train,}
+                       \DataTypeTok{alpha =} \DecValTok{1}\NormalTok{,}
+                       \DataTypeTok{nfolds =} \DecValTok{10}\NormalTok{)}
+  
+\CommentTok{#k) How many variables are selected by the lambda.min and lambda.1se versions of the model? Print the coefficient vectors for each.}
+ 
+\KeywordTok{coef}\NormalTok{(lasso_mod, lasso_mod}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 27 x 1 sparse Matrix of class "dgCMatrix"
+##                      1
+## (Intercept)  3937.5222
+## season1      -942.2750
+## season2         .     
+## season3         .     
+## season4       180.0135
+## holiday0        .     
+## holiday1        .     
+## mnth1        -157.8390
+## mnth2           .     
+## mnth3           .     
+## mnth4           .     
+## mnth5           .     
+## mnth6           .     
+## mnth7        -226.6174
+## mnth8           .     
+## mnth9         200.6087
+## mnth10        394.6708
+## mnth11          .     
+## mnth12          .     
+## workingday0  -133.6080
+## workingday1     .     
+## weathersit1   293.4725
+## weathersit2     .     
+## weathersit3 -1057.3753
+## temp         4507.1560
+## hum         -1924.0604
+## windspeed   -2189.7929
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{coef_mat_1se <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{rownames =} \KeywordTok{rownames}\NormalTok{(}\KeywordTok{coef}\NormalTok{(lasso_mod)) }\OperatorTok{%>%}\StringTok{   }\KeywordTok{data.frame}\NormalTok{(),coef_1se <-}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(}\KeywordTok{coef}\NormalTok{(lasso_mod, lasso_mod}\OperatorTok{$}\NormalTok{lambda}\FloatTok{.1}\NormalTok{se)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{round}\NormalTok{(}\DecValTok{3}\NormalTok{)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{remove_rownames}\NormalTok{() }\OperatorTok{%>%}\StringTok{ }\KeywordTok{rename}\NormalTok{(}\DataTypeTok{rownames =} \DecValTok{1}\NormalTok{,}\DataTypeTok{coef_1se =} \DecValTok{2}\NormalTok{)}
+
+\KeywordTok{coef}\NormalTok{(lasso_mod, lasso_mod}\OperatorTok{$}\NormalTok{lambda.min)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 27 x 1 sparse Matrix of class "dgCMatrix"
+##                         1
+## (Intercept)  3562.8667932
+## season1      -411.7612165
+## season2       343.4790537
+## season3        -0.9794722
+## season4       909.5018810
+## holiday0      226.3281168
+## holiday1        .        
+## mnth1         -88.7986078
+## mnth2           .        
+## mnth3         407.5649685
+## mnth4         217.8892837
+## mnth5         218.0005249
+## mnth6         -12.3560774
+## mnth7        -480.6579882
+## mnth8           .        
+## mnth9         617.7800335
+## mnth10        483.4944878
+## mnth11       -159.6718645
+## mnth12          .        
+## workingday0  -263.6005051
+## workingday1     .        
+## weathersit1   257.3603690
+## weathersit2     .        
+## weathersit3 -1103.1563481
+## temp         6140.2092550
+## hum         -3191.6129044
+## windspeed   -3598.1932373
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{coef_mat_min <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{rownames =} \KeywordTok{rownames}\NormalTok{(}\KeywordTok{coef}\NormalTok{(lasso_mod)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(),coef_1se <-}\StringTok{ }\KeywordTok{as.matrix}\NormalTok{(}\KeywordTok{coef}\NormalTok{(lasso_mod, lasso_mod}\OperatorTok{$}\NormalTok{lambda.min)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{round}\NormalTok{(}\DecValTok{3}\NormalTok{)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{remove_rownames}\NormalTok{() }\OperatorTok{%>%}\StringTok{ }\KeywordTok{rename}\NormalTok{(}\DataTypeTok{rownames =} \DecValTok{1}\NormalTok{,}\DataTypeTok{coef_1se =} \DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\end{document}

@@ -1,0 +1,1291 @@
+---
+title: "Midterm Problem Sets Answers"
+author: "Cady Stringer"
+date: "10/26/2019"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## PROBLEM SET 1
+a)  A note on directories. To see the curent working directory – execute the code getwd(). Let’s set our current working directory to the current location of our project file. This should happen by default if we are using R project files.
+b)	Download the Top 5000 movies on IMDB from the following link: https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset/downloads/imdb-5000-movie-dataset.zip/1. Be sure to save it in a subdirectory of your MGSC_310 folder called “datasets”.
+```{r}
+getwd()
+setwd("C:/Users/cadystringer/Dropbox/MGSC310")
+movies <- read.csv("datasets/movie_metadata.csv")
+```
+
+c)	What are the dimensions of the dataset? Programatically determine this using a function.
+d)	What are the names of the variables in the data set? Hint: use the function names here.
+```{r}
+dim(movies)
+names(movies)
+
+library('ggplot2')
+library('ggridges')
+library('magrittr')
+library('tidyverse')
+```
+
+e)	Use the package ggplot2 to create a scatterplot of IMDB on the x-axis and movie budgets on the y-axis.
+```{r}
+ggplot(movies, aes(x = imdb_score, y = budget)) + geom_point() + 
+  labs(x = "IMDB Score", y = "Movie Budget", title = "IMDB Score and Movie Budgets") 
+
+ggsave("Pset1Scatterplot1.pdf", height = 6, width = 8) 
+```
+
+f)	It looks like there are some outliers in terms of budget. The highest budget movie of all time was Pirates of the Caribbean: On Stranger Tides which cost 387.8m. Any movies with a budget higher than this must be a data anomaly. Run the code below to remove rows of movies which cost more than $400m to produce.
+Now how many movies do we have in our data set?
+```{r}
+movies <- movies %>% filter(budget < 400000000) 
+dim(movies)
+ggplot(movies, aes(x = imdb_score, y = budget)) + geom_point() + 
+  labs(x = "IMDB Score", y = "Movie Budget", title = "IMDB Score and Movie Budgets")
+
+ggsave("Pset1Scatterplot2.pdf", height = 6, width = 8) 
+```
+
+g)	Use stat_smooth() to create a trendline to the above figure. Is there a relationship between IMDB score and budget?
+```{r}
+ggplot(movies, aes(x = imdb_score, y = budget)) + geom_point() + 
+  labs(x = "IMDB Score", y = "Movie Budget", title = "IMDB Score and Movie Budgets") + 
+  stat_smooth()
+
+ggsave("Pset1Scatterplot3.pdf", height = 6, width = 8) 
+```
+
+h)	Use facet_wrap() to create sub-plots of relationship between IMDB Score and Budget. (Note, within the function facet_wrap() use the option , scales = "free" to allow the x-axes and y-axes to vary per sub-plot.For which content ratings do we see the strongest relationship between budget and IMDB score?
+```{r}
+ggplot(movies, aes(x = imdb_score, y = budget)) + geom_point() + 
+  labs(x = "IMDB Score", y = "Movie Budget", title = "IMDB Score and Movie Budgets by Rating") + 
+  stat_smooth() + facet_wrap(vars(content_rating), scales = "free")
+
+ggsave("Pset1FacetWrap1.pdf", height = 6, width = 8) 
+```
+
+i)	Install the R package ggrides to produce ridgeline density plots of simplified genre plots using the code below.
+```{r}
+movies <- movies %>% 
+  mutate(genre_main = unlist(map(strsplit(as.character(movies$genres),"\\|"),1)),
+         grossM = gross / 1000000,
+         budgetM = budget / 1000000)
+
+ggplot(movies, aes(x = grossM, y = genre_main, fill = genre_main)) + 
+  geom_density_ridges() +
+  scale_x_continuous(limits = c(0, 500)) +
+  labs(x = "Box Office Gross (USD Millions)", 
+       y = "Main Genre", title = "Ridgeline Density of Box Office Gross by Genre")
+
+ggsave("Pset1RidgelineDensity.pdf", height = 8, width = 8)
+```
+
+j)	In a series of graphs (at least two) explore the relationship between budget and gross.
+
+```{r}
+movies_BG <- movies %>% select(gross, budget, content_rating, color) %>% 
+  filter(budget < 400000000) %>% 
+  mutate(grossM = gross / 1000000,
+        budgetM = budget / 1000000)
+
+#Testing which variables are suitable for facet wrap graphs
+unique(movies$language)
+unique(movies$country)
+unique(movies$title_year)
+unique(movies$color)
+
+#Simple scatterplot of budget and gross earnings
+ggplot(movies_BG, aes(x = budgetM, y = grossM)) + geom_point() + geom_smooth() +
+  labs(x= "Budget in Millions $", 
+       y = "Gross Earnings in Millions $", 
+       title = "Budget and Gross Earnings")   
+
+ggsave("Pset1BudgetandGross.pdf", height = 8, width = 6)
+
+#Facet wrap by content rating
+ggplot(movies_BG, aes(x = budgetM, y = grossM)) + geom_point() + geom_smooth() +
+  labs(x= "Budget in Millions $", 
+       y = "Gross Earnings in Millions $", 
+       title = "Budget and Gross Earnings by Content Rating")  +facet_wrap(vars(color), scales="free")
+
+ggsave("Pset1ContentFacet.pdf", height = 8, width = 12)
+
+#Facet wrap by Coloring of movie
+ggplot(movies_BG, aes(x = budgetM, y = grossM)) + geom_point() + geom_smooth() +
+  labs(x= "Budget in Millions $", 
+       y = "Gross Earnings in Millions $", 
+       title = "Budget and Gross Earnings by Color")  +facet_wrap(vars(color), scales="free")
+
+ggsave("Pset1ColorFacet.pdf", height = 8, width = 12)
+```
+
+
+
+##PROBLEM SET 2 
+
+#Question 3
+a) We’re going to work with the movies dataset again. Download the Top 5000 movies on IMDB from the following link: https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset/ downloads/imdb-5000-movie-dataset.zip/1. Be sure to save it in a subdirectory of your BUS_696 folder.
+```{r}
+getwd()
+library('tidyverse')
+library('magrittr')
+library('here')
+library('ggplot2')
+library('dplyr')
+library('forcats')
+```
+
+b) Run the code below to filter out films with unreasonably large budgets. Also use the code to create new variables (mutate) that are simplified versions of the genres and budget variables.
+```{r}
+movies <- read.csv(here::here("datasets", "movie_metadata.csv"))
+movies <- movies %>% filter(budget < 4e+08)
+movies <- movies %>% mutate(genre_main = unlist(map(strsplit(as.character(movies$genres),
+                                                             "\\|"), 1)), grossM = gross/1e+06, budgetM = budget/1e+06) 
+
+movies <- movies %>% mutate(genre_main = factor(genre_main) %>% fct_drop)
+```
+
+c) Use the mutate function to generate profitM which is the difference between a movie’s gross and its budget, and the variable ROI which is the return on investment, specifically profit as a ratio of budget.
+```{r}
+movies %<>% mutate(profitM = grossM - budgetM,
+                   ROI = profitM/budgetM)
+```
+
+d) What is the average ROI for firms in the dataset? Use the function geom_histogram() to create a histogram of ROI for movies in the database.
+```{r}
+summary(movies)
+View(movies)
+ggplot(movies, aes(movies$ROI)) + geom_histogram() + 
+  labs(x = "Return On Investment",
+  y = "Amount of Movies",
+  title = "Return On Investment Histogram")
+ggsave("ROI Histogram.pdf", height = 6, width = 8)
+```
+
+e) From the plot above, it should be clear several outliers throw off the plot. Use the filter command to filter out films that have an ROI greater than 10. Just to be careful, count the number of films which match this criteria using the count() function.
+```{r}
+movies %<>% filter(ROI<10)
+count(movies, vars = "ROI")
+
+ggplot(movies, aes(movies$ROI)) + geom_histogram() + 
+  labs(x = "Return On Investment", 
+       y = "Amount of Movies", 
+       title = "Return on Investment Histogram")
+
+ggsave("ROI Histogram filtered.pdf", height = 6, width = 8)
+```
+
+f) Use the group_by() function to aggregate films by genre_main and create mean ROI by genre using the summarize() command. Which film genres have the highest return on investment (ROI)? (Note we can also create standard errors by including in the summarize() command se_ROI_genre = sd(ROI, na.rm = TRUE)/sqrt(n()))
+```{r}
+Genre_Group <- movies %>% group_by(genre_main) %>% 
+  summarize(mean_ROI = mean(ROI, na.rm = TRUE), 
+            se_ROI_genre = sd(ROI, na.rm = TRUE)/sqrt(n()))
+Genre_Group
+```
+
+g) Use ggplot to create plots of the average ROI by genre using geom_point(). Note you can also use geom_errorbar() to create standard error bars using the code below.
+```{r}
+ggplot(Genre_Group, aes(x=genre_main, y= mean_ROI)) + 
+  geom_point() + 
+  geom_errorbar(mapping = aes(ymin = mean_ROI -se_ROI_genre, 
+                              ymax = mean_ROI + se_ROI_genre)) +
+  labs(x = "Movie Genre",
+      y = "Average Return on Investment",
+      title = "Average Return on Investment Grouped by Genre")
+
+ggsave("Avg ROI By Genre.pdf", height = 6, width = 12)
+```
+
+h) Use the summarize command to compute averages by actor_1_name for ROI and profit. Also within your summarize command calculate num_films as the number of films by actor. Use the arrange() command to sort the dataframe in descending order by average actor ROI. Finally use slice() to print the first twenty rows. Which three actors have the highest ROIs?
+```{r}
+Actor_Avg <- movies %>% group_by(actor_1_name) %>% 
+  summarize(mean_ROI_act1 = mean(ROI, na.rm = TRUE), 
+            mean_profit_act1 = mean(profitM, na.rm = TRUE),
+            num_films = n()) %>% 
+  arrange(desc(mean_ROI_act1))
+
+Actor_Avg %>% slice(1:20)
+```
+
+i) Use geom_point() to plot the 30 actors with the highest ROI. Note we can use the top_n() command to plot only the top 30 actors. We can also use fct_reorder() to order the actors by highest ROI.
+```{r}
+ggplot(data = Actor_Avg %>% top_n(30, wt = mean_ROI_act1), 
+       mapping = aes(x = fct_reorder(actor_1_name,  mean_ROI_act1) %>% fct_drop(), y = mean_ROI_act1)) + geom_point() + coord_flip() + 
+        labs(x = "Actor Name",
+        y = "Return on Investment",
+        title = "Average Return on Investment for Top 30 Actors")
+
+ggsave("Average ROI Top 30.pdf", height = 6, width = 8)
+```
+
+j) Plot the 30 actors with the lowest return on investment
+```{r}
+ggplot(data = Actor_Avg %>% top_n(-30, wt = mean_ROI_act1), 
+       mapping = aes(x = fct_reorder(actor_1_name,  mean_ROI_act1) %>% fct_drop(), y = mean_ROI_act1)) + geom_point() + coord_flip() + 
+  labs(x = "Actor Name", y = "Return on Investment", title = "Average Return on Investment for Bottom 30 Actors")
+
+ggsave("Average ROI Bottom 30.pdf", height = 6, width = 8)
+```
+
+
+##PROBLEM SET 3
+
+## Question 1
+3.) We now revisit the bias-variance decomposition.
+
+a.) Provide a sketch of typical (squared) bias, variance, training error, test error, and Bayes (or irreducible) error curves, on a single plot, as we go from less flexible statistical learning methods towards more flexible approaches. The x-axis should represent
+the amount of flexibility in the method, and the y-axis should represent the values for each curve. There should be five curves. Make sure to label each one.
+
+b.) Explain why each of the five curves has the shape displayed in part (a).
+
+1.) Bias: the resulting difference between the expected value and the true value of what we're trying to predict. Suppose you repeated the model building process. Bias is the average amount by which our model predicitions would be different from the true value.
+
+2.) Variance: the variability of the model for any particular data point. Remeber your data in the training set is just a sample of all data in the population. If you sampled another dataset, and found your new predictions were very different from your old, that etimator would have high variance. Variance increases because as we reduce the error in our training set we begin fitting the irreducible error rather than the true model.
+
+3.) Training error: the error on the data we're using to fit our model. Since we have infinite complexity for our model, we can always find some way to reduce the error, by adding more variables or functions of variables, regardless for how reasonable that is.
+
+4.) Test error: the test error comes from the data we use to validate our original model fit on the training data. Total test error is the sum of bias and variance. Originally the test error declines because bias declines faster than variance increases. Eventually this reverses, and test error increases rapidly as variance increases, which gives it the quadratic shape.
+
+5.) Bayes irreducible error: is the part that we'll never be able to model. This noise is inherent in any process that we can't predict.
+
+## Question 2
+a.) We’re going to work with the movies dataset again. Download the Top 5000 movies on IMDB from the following link: https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset/ downloads/imdb-5000-movie-dataset.zip/1. Be sure to save it in a subdirectory of your MGSC_310 folder.
+
+b.) Run the code below to filter out films with unreasonably large budgets and movies with missing content ratings. Also use the code to create new variables (mutate) that are simplified versions of the genres, budget variables, and cast facebook likes.
+
+```{r}
+library('corrplot')
+library('tidyverse')
+library('magrittr')
+library('here')
+library('dplyr')
+library('coefplot')
+options(scipen = 10)
+movies <- read.csv(here::here("datasets","movie_metadata.csv"))
+movies <- movies %>% filter(budget < 400000000) %>% filter(content_rating != "",
+content_rating != "Not Rated")
+movies <- movies %>%
+mutate(genre_main = unlist(map(strsplit(as.character(movies$genres),"\\|"),1)),
+grossM = gross / 1000000,
+budgetM = budget / 1000000,
+profitM = grossM - budgetM,
+cast_total_facebook_likes000s = cast_total_facebook_likes / 1000)
+movies <- movies %>% mutate(genre_main = factor(genre_main) %>% fct_drop())
+```
+
+c.) Split the movies dataset into a testing and training set, with the training set 80% of the size of the original dataset. Be sure to use set.seed(1861) to ensure your results are comparable to mine and your classmates.
+
+```{r}
+set.seed(1861)
+train_idx <- sample(1:nrow(movies), floor(0.80*nrow(movies)))
+movies_train <- movies %>% slice(train_idx)
+movies_test <- movies %>% slice(-train_idx)
+```
+
+d.) How many rows are in the test and trainig datasets?
+```{r}
+nrow(movies_train)
+nrow(movies_test)
+```
+
+ANSWER: there are 3396 rows in the training dataset and 849 rows in the testing dataset.
+
+e.) In building a regression model, a good place to start is producing a correlation matrix that shows which variables are positively or negatively correlated with the variable we want to predict. We can only correlate numeric variables so run the code below to produce the correlation matrix. This code does two things: 1) the select_if(is.numeric) selects only the numeric variables, and 2) the drop_na() removes missing values from the correlation matrix. It then prints the correlation coefficient between profitM and all the numeric varibles in the data frame. Which variables are most strongly (positivelty or negatively) correlated with profits?
+
+```{r}
+cormat <- cor(movies_train %>% select_if(is.numeric) %>% drop_na())
+print(cormat[,"profitM"])
+```
+
+ANSWER: the strongest correlations with profit were: gross (both grossM and gross, the correlations are the same since they're the same just expressed in different metrics), the number of users for reviews (num_user_for_reviews), the number of users that voted (num_voted_users), and IMDB score (imdb_score). All of these happen to be positively correlated, the negative correlations are much smaller in magnitude and thus the correlation is smaller.
+
+
+f.) Extra Credit. Use the corrplot package to produce a plot of the correlation matrix.
+
+```{r}
+corrplot(cormat, method="color", tl.col="black", tl.srt=45, mar=c(0,0,1,0), tl.cex=0.6, title = "Movie Correlation Matrix")
+```
+
+g.) Let’s regress profitM against imdb_score and store this as mod1. Use the summary() function over mod1 to print the regerssion summary. Be sure to estimate our model against the training dataset.
+
+```{r}
+mod1 <- lm(profitM ~imdb_score, data = movies_train)
+summary(mod1)
+```
+
+h.) Interpret the coefficient for imdb_score, being specific about the impact regarding magnitude and sign.
+
+ANSWER: all else equal, a 1 unit increase in IMDB score leads to a 13.3319 million dollar increase in profits. So, we can infer that movies with a higher IMDB score tend to earn more profit.
+
+i.) What is the p-value associated with the estimate of imdb_score? In your own words, what does a p-value mean? What does this estimate p-value imply about the relationship between imdb_score and profit?
+
+ANSWER: the P-value is 2.2e-16. A p-value indicates the probability that we have incorrectly rejected the null hypothesis, specifically that the coefficient is equal to zero. The very small p value indicates there is a low likelihood that the true population coefficient on IMDB score has no impact on the profit of the movie.
+
+j.) Include cast_total_facebook_likes000s as a predictor in addition to imdb_score. Store this model as mod2 and use summary() to output the results.
+
+```{r}
+mod2 <-  lm(profitM ~ imdb_score + cast_total_facebook_likes000s, data = movies_train)
+summary(mod2)
+```
+
+k.) What is the estimated impact of cast facebook likes on movie profits?
+
+ANSWER: a 1 unit increase in cast facebook likes is estimated to increase movie profits by 0.20710 million dollars.
+
+l.) What is the impact of content rating on a movie’s expected profit? To answer this question we will have to clean content_rating a little bit. Use the fct_lump() function to create factor levels for the four most common factor levels, leaving the rest as a category “other”. Call this variable rating_simple and store it in the movies_train data frame.
+
+```{r}
+library(forcats)
+movies_train %<>% mutate(rating_simple = 
+                  fct_lump(content_rating, n = 4))
+table(movies_train$rating_simple)
+```
+
+m) Estimate a model with profitM on the left-hand-side and imdb_score, cast_total_facebook_likes000s and rating_simple on the right-hand side. Interpret the coefficient for rating_simpleR.
+
+ANSWER: comparing a movie with the same IMDB score and facebook likes, we estimate a movie rated R will earn 23.03335 million dollars LESS than a similar movie rated G.
+
+```{r}
+mod_P <- lm(profitM ~ imdb_score + cast_total_facebook_likes000s + rating_simple, data = movies_train)
+summary(mod_P)
+```
+
+n) Why does the coefficient for G not appear in the regression table above?
+
+ANSWER: The G rating is the base level/excluded factor for ratings_simple so it is the excluded category. All of these "rating_simple" coefficients are relative to the G rating because it is excluded, based on the linear independence required of matrices.
+
+
+
+##PROBLEM SET 4
+
+## Question 1
+
+a) We’re going to work with the movies dataset again. Download the Top 5000 movies on IMDB from the following link: https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset/ downloads/imdb-5000-movie-dataset.zip/1. Be sure to save it in a subdirectory of your MGSC_310 folder.
+
+b) Run the code below to filter out films with unreasonably large budgets and movies with missing content ratings. Also use the code to create new variables (mutate) that are simplified versions of the genres, budget variables, ratings and genres. Also split your data into testing and training sets.
+
+```{r}
+library("tidyverse")
+options(scipen = 10)
+set.seed(1861)
+movies <- read.csv(here::here("datasets", "movie_metadata.csv"))
+movies <- movies %>% filter(budget < 4e+08) %>% filter(content_rating !=
+"", content_rating != "Not Rated") %>% drop_na(gross)
+movies <- movies %>% mutate(genre_main = unlist(map(strsplit(as.character(movies$genres), "\\|"), 1)), grossM = gross/1e+06, budgetM = budget/1e+06,
+profitM = grossM - budgetM, rating_simple = fct_lump(content_rating,n = 4), genre_main = factor(genre_main) %>% fct_drop())
+set.seed(1861)
+train_idx <- sample(1:nrow(movies), 0.8*nrow(movies))
+movies_train <- movies %>% slice(train_idx)
+movies_test <- movies %>% slice(-train_idx)
+```
+
+c) Estimate a linear model using the lm command with grossM on the left hand side, and imdb_score and budgetM on the right-hand side. Be sure to estimate on the training set. Use the summary command to show the summary of your model.
+
+```{r}
+mod1 <- lm(grossM ~ imdb_score + budgetM, data = movies_train)
+summary(mod1)
+```
+
+d) Interpret the coefficient on budgetM. Holding fixed imdb_score, does spending more money on movies seem to have a net positive return on movie gross?
+
+ANSWER: holding IMDB score constant, for every 1 million dollar increase in budget, there is a 1.00460 million dollar increase in gross.
+
+e) Now estimate a linear model using the lm command with grossM on the left hand side, and imdb_score, budgetM and the square of budgetM as controls. Be sure to estimate on the training set. Use the summary command to show the summary of your model.
+
+```{r}
+mod2 <- lm(grossM ~ imdb_score + budgetM + I(budgetM^2), data = movies_train)
+summary(mod2)
+```
+
+f) What do the coefficients for budgetM and budgetM squared tell us about the relationship between budgetM and movies?
+
+ANSWER: the positive linear coefficient on budgetM and the negative coefficient on budgetM squared indicates there is a concanve relationship between budget and gross.
+
+g) Let’s investigate the marginal impact of budget for different levels of budget. Use the margins command to calcuclate the marginal impact of an additional dollar of budget at budget levels of 25, 50, 75, 90, 100, 200, and 300 million. For which levels does it make sense to increase your movie’s budget?
+
+ANSWER: we're seeing diminishing returns on an increase in budget. The levels it makes the most sense to increase your budget on would be the first three (increasing by 25, 50, or 75 million), because after that your returns are less than what you're investing, so you're losing money.
+
+```{r}
+library('margins')
+m <- margins(mod2, at = list(budgetM = c(25,50,75,90,100,200,300)))
+m
+```
+
+h) Extra credit. Use the effects option in the cplot command to plot the marginal impact of an additional dollar of budget for all levels of budget. What does the figure say regarding the impact of an additional dollar of budget revenue?
+
+ANSWER (mine, not his): this figure shows that we have a diminishing return on investment for increasing our budget marginally. For a budget less than about 100 million, we'll have a good return on our investment and earn more money if we increase our budget. After about 100 million (when our marginal impact dips below 1), we'll be losing money on our investment and it doesn't make sense to increase our budget anymore.
+
+```{r}
+cplot(mod2, x = "budgetM", 
+      what = "effect", 
+      scatter = TRUE, 
+      xlab = "Budget in Millions $", 
+      ylab = "Marginal Impact of Budget")
+```
+
+## Question 2
+
+a) Use the movies data and estimate a model predicting movie gross using imdb_score, budgetM, the square of budgetM and ratings_simple as independent variables. Use the relevel command to change the reference category of ratings to “R”. Print the summary of this regression table.
+
+```{r}
+mod3 <- lm(grossM ~ imdb_score + budgetM + I(budgetM^2) + relevel(rating_simple, ref = "R"), data = movies_train)
+summary(mod3)
+```
+
+b) Interpret the coefficient on a movie rated G.
+
+ANSWER: a movie with a G rating, holding budget and IMDB score fixed, will earn $23M more in gross.
+
+c) Use the predict function to generate the residuals and predictions in the test and training set.
+
+```{r}
+preds_DF_train <- data.frame(preds_train = predict(mod3, newdata = movies_train), true = movies_train$grossM, resids = mod3$residuals)
+
+preds_DF_test <- data.frame(preds_test = predict(mod3, newdata = movies_test), true = movies_test$grossM, resids = mod3$residuals)
+
+#OTHER WAY TO DO RESIDS, by hand
+resids  = movies_test$grossM - predict(mod3, newdata = movies_test)
+resids = movies_train$grossM - predict(mod3, newdata = movies_train)
+
+#CONFUSING WAY HE MADE HIS DF
+preds_DF <- data.frame(preds = c(predict(mod3, newdata = movies_train), predict(mod3, newdata = movies_test)), resids = c(movies_train$grossM - predict(mod3, newdata = movies_train), movies_test$grossM - predict(mod3, newdata = movies_test)), type = c(rep("train", nrow(movies_train)), rep("test", nrow(movies_test)))) %>% bind_cols(movies_train %>% bind_rows(movies_test))
+
+```
+
+d) Plot the residuals against the predicted values in the test and training sets. Do our errors appear homoskedastic or heteroskedastic?
+
+ANSWER: our errors seem heteroskedastic because they are non-constant. They fan outward.
+
+```{r}
+ggplot(preds_DF_train, aes(x = preds_train, y = resids)) + 
+  geom_point() + labs(x = "Predicted Values", y = "Residuals", title = "Residuals vs Predicted Values, Training")
+```
+
+```{r}
+ggplot(preds_DF_test, aes(x = preds_test, y = resids)) + 
+  geom_point() + labs(x = "Predicted Values", y = "Residuals", title = "Residuals vs Predicted Values, Test")
+```
+
+e) Plot the predicted versus true in the test and training set.
+
+Training:
+```{r}
+ggplot(preds_DF_train, aes(x = true, y = preds_train)) + 
+  geom_point(alpha = 1/10) + xlim(0,800) + ylim(0,800) +
+  labs(x = "Gross in Millions, True",
+       y = "Gross in Millions, Predicted",
+       title = "Predicted vs True Values, Training") +
+  geom_abline(intercept = 0, slope = 1, 
+              color = "red", linetype = "dashed")
+```
+Test:
+```{r}
+ggplot(preds_DF_test, aes(x = true, y = preds_test)) + 
+  geom_point(alpha = 1/10) + xlim(0,800) + ylim(0,800) +
+  labs(x = "Gross in Millions, True",
+       y = "Gross in Millions, Predicted",
+       title = "Predicted vs True Values, Test")  +
+  geom_abline(intercept = 0, slope = 1, 
+              color = "red", linetype = "dashed")
+```
+
+f) Use the function below and the R2 function in the package caret to calculate in-sample and out-of-sample R2 and RMSE. Is the model overfit? And if so, how do we know?
+
+ANSWER: Model is underfit because RMSE in the test set is lower than training RMSE.
+
+```{r}
+library("caret")
+#Training
+RMSE <- function(t, p) {sqrt(sum(((t - p)^2)) * (1/nrow(t)))}
+RMSE_train <- RMSE(preds_DF_train, movies_train$grossM)
+RMSE_train
+r_sq_train <- R2(preds_DF_train$preds_train, movies_train$grossM)
+r_sq_train
+
+#WEIRD WAY HE DID IT using his weird DF on PSET 4 packet
+
+#Test
+RMSE_test <- RMSE(preds_DF_test, movies_test$grossM)
+RMSE_test
+r_sq_test <- R2(preds_DF_test$preds_test, movies_test$grossM)
+r_sq_test
+```
+
+
+##PROBLEM SET 5
+
+## Question 1
+
+![Here is my proof.](/Users/cadystringer/Dropbox/MGSC310/Proof.JPG)
+
+## Question 2
+
+a) Run the code below to generate test and training sets for the Boston housing data. We will use these data to estimate logitistic models predicting whether a neighborhood has pricey or non-pricey homes.
+
+```{r}
+library(MASS)
+library(tidyverse)
+data(Boston)
+set.seed(1861)
+trainSize <- 0.75
+train_idx <- sample(1:nrow(Boston), size = floor(nrow(Boston) * trainSize))
+
+housing <- Boston %>% mutate(PriceyHome = ifelse(medv > 40, 1, 0), chas = factor(chas))
+
+housing_train <- housing %>% slice(train_idx) 
+housing_test <- housing %>% slice(-train_idx)
+```
+
+b) Use the group_by command over PriceyHome, along with the command summarize_all(list(mean = mean), na.rm = TRUE) to generate average neighborhood differences across pricey and non-pricey homes. Where do pricey homes differ the most from non-pricey homes? Be sure to use the housing_train dataset.
+
+ANSWER: PriceyHomes differ the most in terms of the variables tax and black. The average full-value property-tax rate per \$10,000 is about 417.6 for PriceyHomes, 346.8 for Non-Pricey. The variable black, that is a function of the proportion of blacks by town, is only about 353.3 for PriceyHomes, and 384.2 for Non-Pricey.
+
+```{r}
+housing_train_pricey <- housing_train %>% group_by(PriceyHome) %>% summarize_all(list(mean = mean), na.rm = TRUE)
+housing_train_pricey
+```
+
+c) Investigate, using at least three plots (using ggplot) the relationship between the variables that differential pricey from non-pricey homes. For each one, alter the color of the plot based on PriceyHome so that these homes stand out. What conclusions do you draw from these plots?
+
+PLOT 1:
+This plot shows that PriceyHomes have a larger value for the black variable, but this data is noisy and there are lots of outliers in the 10-20 median value range, so whether or not the variable black could effectively predict PriceyHome is unclear because the relationship is unclear.
+```{r}
+library(ggthemes)
+theme_set(theme_igray())
+ggplot(housing_train, aes(x=medv, y=black, color = PriceyHome)) +
+  geom_point() + geom_smooth() +
+  labs(x = "Median Value of Owner-Occupied Homes, in $1000s",
+       y = "Function based on Proportion of Blacks by Town",
+       title = "Black vs Home Value")
+```
+
+PLOT 2:
+This plot shows a higher tax rate for many of the lower median home values, but shows a lot of heavily weighted outliers for PriceyHomes. The data is imbalanced and doesn't show a clear relationship between tax rate and home value, so tax may not be a good way to predict whether a house will be a PriceyHome.
+```{r}
+theme_set(theme_igray())
+ggplot(housing_train, aes(x=medv, y=tax, color = PriceyHome)) +
+  geom_point() + geom_smooth() + geom_count() +
+  labs(x = "Median Value of Owner-Occupied Homes, in $1,000s",
+       y = "Full Value Property Tax rate per $10,000",
+       title = "Tax Rate vs Home Value")
+```
+
+PLOT 3:
+This plot shows that PriceyHomes have more rooms, but once again the PriceyHome part is noisy with outliers. The trend overall is that homes with more rooms are usually more expensive, which makes sense. Number of rooms could be a good way to predict PriceyHomes, but would miss a lot of those PriceyHome outliers with fewer rooms.
+
+```{r}
+theme_set(theme_igray())
+ggplot(housing_train, aes(x=medv, y=rm, color = PriceyHome)) +
+  geom_point() + geom_smooth() +
+  labs(x = "Median Value of Owner-Occupied Homes, in $1000s",
+       y = "Average Number of Rooms per House",
+       title = "Rooms vs Home Value")
+```
+
+PLOT 4:
+This shows us that neighborhoods with higher crime rates have lower median house values, which is what we would expect, and PriceyHomes have very small per capita crime rates. Crime rate could be a good way to predict PriceyHomes. There are a few outliers in the PriceyHomes part of the graph, where crime rates are higher. This could be because there is a lot of theft and break-ins in wealthy neighborhoods with expensive homes. The interesting part of this graph is that at a median home value of about 20, the crime rate levels off and stays about the same between a home value of 20 all the way to 50, so after a certain price (around 20), buying a more expensive home doesn't necessarily mean you'll be living in a safer neighborhood. The practical application of this could be that if crime rate is really important to a buyer, it's valuable to know that after that threshold, more expensive doesn't necessarily mean safer.
+
+```{r}
+ggplot(housing_train, aes(x=medv, y=crim, color = PriceyHome)) +
+  geom_point() + geom_smooth() + 
+  labs(x = "Median Value of Owner-Occupied Homes, in $1000s",
+                                      y = "Per Capita Crime Rate by town",
+                                      title = "Crime Rate vs Home Value")
+```
+
+PLOT 5:
+This data is pretty imbalanced, but shows a general trend that there is more industry in areas with less expensive homes. The amount of industry for PriceyHomes, especially with a median value of 50, vary a lot. This data doesn't show a clear relationship, and I don't think industry would be a good way to predict PriceyHomes because of all the heavily weighted PriceyHome outliers.
+
+```{r}
+help(Boston)
+ggplot(housing_train, aes(x=medv, y=indus, color = PriceyHome)) +
+  geom_point() + geom_count() + geom_smooth() + 
+  labs(x = "Median Value of Owner-Occupied Homes, in $1000s",
+       y = "Proportion of Non-Retail Business Acres",
+       title = "Amount of Industry vs Home Value")
+```
+
+PLOT 6:
+This shows a pretty clear relationship between the percent of population that's lower status and home value. The more low status population, the lower the median home value. As home value increases, the percent of low status population decreases, and PriceyHomes have a small percent of low status popuation. The lstat variable could be a good predictor of home value and PriceyHomes.
+
+```{r}
+ggplot(housing_train, aes(x=medv, y=lstat, color = PriceyHome)) +
+  geom_point() + geom_smooth() + labs(x = "Median Value of Owner-Occupied Homes, in $1000s",
+                                      y = "Percent of Population that is Lower Status",
+                                      title = "Lower Status Population vs Home Value")
+```
+
+PLOT 7:
+This data is all over the map. There is no clear relationship between proportion of residential land zoned for lots over 25,000 sq ft and median home value, or whether or not a home will be a PriceyHome. There is also a lot of data at 0, where no land is zoned, which is skewing the data and the trendline. This variable would not do a good job of predicting PriceyHomes.
+
+```{r}
+ggplot(housing_train, aes(x=medv, y=zn, color = PriceyHome)) +
+  geom_point() + geom_smooth() + geom_count() + 
+  labs(x = "Median Value of Owner-Occupied Homes, in $1000s",
+       y = "Proportion of Land Zoned for  Lots over 25,000 sq. ft",
+       title = "Large Lots vs Home Value")
+```
+ 
+d) Estimate a logistic model with PriceyHome on the left hand side (dependent variable) and a Charles River dummy (chas) on the right hand side (independent variable). Interpret the coefficient on chas. What impact does being adjacent to the Charles River have on a home’s value?
+
+ANSWER: first we need to exponentiate the coefficient on chas to be able to interpret it. From there, we can see that homes adjacent to the Charles River 476.6% more likely to be a PriceyHome (wow).
+
+##BE CAREFUL TO MAKE SURE TO PUT BINOMIAL, LOTS OF PEOPLE MAKE THAT MISTAKE
+
+```{r}
+logit_fit <- glm(PriceyHome ~ chas,
+                 data = housing_train,
+                 family = binomial)
+exp(logit_fit$coefficients[2])
+```
+
+e) Estimate the same model predicting whether a home is pricey as a function of chas, crim, lstat, ptratio, zn, rm, tax, rad and nox. Use the summary command over your model. Interpret the magnitude of the coefficient for chas. What do you conclude now about the amenity impact of living close to the Charles River?
+
+ANSWER: The coefficient of chas is about 1.283, which means that houses adjacent to the Charles River are 128.3% more likely to be PriceyHomes compared to those that aren't located on the river. We can conclude now that living near the Charles River still has a pretty big impact on the price of the house, but when we create a model that includes more variables, being on the Charles River has less of an impact on likelihood of being a PriceyHome (before it was about 476%, now only 128%).
+
+```{r}
+logit_fit2 <- glm(PriceyHome ~ chas + crim + lstat + ptratio + zn + rm + tax + rad + nox,
+                 data = housing_train,
+                 family = binomial)
+summary(logit_fit2)
+#Need to exponentiate to interpret
+exp(logit_fit2$coefficients)
+```
+
+f) Use the predict function to generate probability scores and class predictions (using a cutoff of 0.5) in the test and training sets.
+
+Train:
+```{r}
+preds_train <- data.frame(scores = predict(logit_fit2, type = "response"), housing_train)
+
+preds_train <- preds_train %>% mutate(class_pred05 = ifelse(scores>0.5,1,0))
+head(preds_train)
+```
+Test:
+```{r}
+preds_test <- data.frame(scores = predict(logit_fit2, newdata = housing_test, type = "response"), housing_test)
+
+preds_test <- preds_test %>% mutate(class_pred05 = ifelse(scores>0.5,1,0))
+head(preds_test)
+```
+
+g) Calculate confusion matrices for the test and training sets. Calculate the accuracy, true positives, true negatives, sensitivity, specificity and false positive rate of the model in the test and training set.
+
+```{r}
+#Train confusion matrix
+table(preds_train$PriceyHome, preds_train$class_pred05)
+#Test confusion matrix
+table(preds_test$PriceyHome, preds_test$class_pred05)
+
+#MORE CONFUSING WAY TO DO THIS IN SOLUTIONS, but formulas for calculating by hand are below:
+
+#ACCURACY
+accuracy_train <- 372/379
+accuracy_train
+accuracy_test <- 121/127
+accuracy_test
+#TRUE POSITIVES
+tp_train <- 19
+tp_train
+tp_test <- 4
+tp_test
+#TRUE NEGATIVES
+tn_train <- 353
+tn_train
+tn_test <- 117
+tn_test
+#SENSITIVITY
+#TP/P
+sensitivity_train <- 19/25
+sensitivity_train
+sensitivity_test <- 4/6
+sensitivity_test
+#SPECIFICITY
+#TN/N
+specificity_train <- 353/354
+specificity_train
+specificity_test <- 117/121
+specificity_test
+#FALSE POSITIVE RATE
+#FP/N
+falsePos_train <- 1/354
+falsePos_train
+falsePos_test <- 4/121
+falsePos_test
+```
+
+h) Based on the accuracy scores above, how should we adjust the probability cutoff? Are there any other factors we should consider when adjusting this cutoff?
+
+ANSWER: Our model is highly specific (0.99 and 0.96), but not as sensitive (0.76, 0.66). Generally, our sensitivity and specificity are close to 1, so this model is doing a pretty good job. We should also consider the relative costs of false positives and false negatives. In the context of this problem set, categorizing whether or not something is a pricey home isn't life or death like catching bombs at TSA, so the costs of false positives/negatives are pretty low. In theory, financial stakes were high and we wanted to make the best possible model, like if we were real estate agents using this function to categorize homes on a website display (only displaying homes to customers who would be interested, which would lead to huge payoffs in commissions), we may want to make the model more sensitive so that it can better predict true positives by lowering the p cutoff a little bit, maybe to 0.47 or 0.45, and play around with it and keep checking our accuracy.
+
+i) Plot the ROC curve for the test and training sets.
+
+Training ROC:
+```{r}
+library('plotROC')
+train_ROC <- ggplot(preds_train, aes(m = scores, d = PriceyHome)) + 
+geom_roc(labelsize = 3.5, cutoffs.at = c(.99,.9,.8,.5,.3,.1,.01)) + labs(x = "True Positive Fraction", 
+                                                        y = "False Positive Fraction",
+                                                        title = "ROC Curve, Train")
+train_ROC
+#OR 
+plot(train_ROC)
+```
+
+Test ROC:
+```{r}
+test_ROC <- ggplot(preds_test, aes(m = scores, d = PriceyHome)) + 
+geom_roc(labelsize = 3.5, cutoffs.at = c(.99,.9,.8,.5,.3,.1,.01)) + labs(x = "True Positive Fraction", 
+                                                        y = "False Positive Fraction",
+                                                        title = "ROC Curve, Test")
+test_ROC
+#OR 
+plot(test_ROC)
+```
+
+j) Calculate the AUC for the models. What do you conclude regarding whether the model is over or underfit? How would you recommend adjusting the model if it is over or underfit?
+
+ANSWER: our AUCs are 0.99 and 0.97, which are really close to 1. Accuracy is quite high. It seems only slightly overfit, which could be (the rest is mine) because we are probably estimating too many variables. We can adjust the model to estimate fewer variables and that would be like fewer degrees of freedom, and would decrease the AUC so it isn't as overfit.
+
+```{r}
+calc_auc(train_ROC)
+calc_auc(test_ROC)
+```
+
+
+##PROBLEM SET 6
+
+## Question 1: What Predicts Blockbuster Movies?
+
+a) Run the code below to clean the movies data frame and generate test and training sets of the clean data. Note we have created a variable top_director if a director is in the top 10% of film directors by number of films produced. We have also used the left_join() command to merge this variable back into our main dataset. We will explore this type of feature generation later in the course, but for now please you can take the code as given and run the code without fully understanding it.
+
+```{r}
+library('tidyverse')
+options(scipen = 50)
+set.seed(1861)
+movies <- read.csv(here::here("datasets","movie_metadata.csv")) 
+movies <- movies %>% filter(budget < 400000000) %>%
+filter(content_rating != "", 
+       content_rating != "Not Rated", !is.na(gross))
+movies <- movies %>% mutate(genre_main = unlist(map(strsplit(as.character(movies$genres),"\\|"),1)),
+                            grossM = gross / 1000000, 
+                            budgetM = budget / 1000000, 
+                            profitM = grossM - budgetM,
+                            blockbuster = ifelse(grossM > 200,1,0)) 
+movies <- movies %>% mutate(genre_main = fct_lump(genre_main,5),
+                            content_rating = fct_lump(content_rating,3), 
+                            country = fct_lump(country,2), 
+                            cast_total_facebook_likes000s = cast_total_facebook_likes / 1000,) %>%                              drop_na()
+top_director <- movies %>% group_by(director_name) %>% 
+  summarize(num_films = n()) %>% 
+  top_frac(.1) %>% mutate(top_director = 1) %>% 
+  select(-num_films)
+movies <- movies %>% left_join(top_director, by = "director_name") %>% 
+  mutate(top_director = replace_na(top_director,0))
+train_idx <- sample(1:nrow(movies),size = floor(0.75*nrow(movies))) 
+movies_train <- movies %>% slice(train_idx)
+movies_test <- movies %>% slice(-train_idx)
+
+```
+
+b) One concern we might have is that the distributions of the outcome we want to predict – in this case blockbuster – is different in the test and training sets. This can arise through random chance, but can affect our outcome. Use the mean() command to calculate the average number of blockbusters in the test and training sets. To test for whether this difference in means is statistically meaningful, use the t.test() command to calculate a statistical test where the null hypothesis is that the means are similar in both datasets. What is the p-value you calculate? What do you conclude from this p-value?
+
+ANSWER (mine): The p-value is 0.0162, which is smaller than 0.05, so we can reject our null hypothesis that the means are similar in both datasets, and we accept our alternate hypothesis that the means are signinficantly different in the datasets. This could be a problem for creating our model later because the distributions may be different between the test and training sets, which could decrease our accuracy in the model building/testing process. If our datasets don't have the same/very similar distributions, we'll never be able to perfect our model because if the model works well with the training distribution it won't work as well on the test one and vice versa. But if we used the 0.01 cutoff for our p-value, we would fail to reject our null hypothesis, but in this circumstance I think the more liberal 0.05 cutoff is sufficient because I'm more willing to risk a few more false positive findings because this isn't a cancer screening or TSA, and the costs of false positives in this situation are very low.
+
+ANSWER (his): P value is 0.2232 meaning there is a 22% chance we recieved a difference in means at least this extreme even though the null hypothesis (that the means are the same) is true. We therefore fail to reject the null hypothesis that the means across the training and testing set are different.
+
+```{r}
+#training
+mean(movies_train$blockbuster, na.rm = TRUE)
+#testing
+mean(movies_test$blockbuster, na.rm = TRUE)
+
+t_test <- t.test(movies_train$blockbuster, movies_test$blockbuster)
+t_test$p.value
+```
+
+c) Estimate a logit model with blockbuster as your dependent variable, and include budgetM, top_director, cast_total_facebook_likes000s, content_rating, and genre_main as your predictor variables. Use the summary command to display the output of your model.
+
+```{r}
+logit_fit <- glm(blockbuster ~ budgetM + top_director + cast_total_facebook_likes000s +
+                  content_rating + genre_main,
+                  family = binomial,
+                  data = movies_train)
+summary(logit_fit)
+```
+
+d) Interpret the coefficients on content_ratingR, genre_mainAdventure, and top_director.
+
+```{r}
+exp(logit_fit$coefficients)
+```
+
+* MULTIPLY EXPONENTIATED COEFFICIENTS BY 100
+
+content_ratingR: holding everything else constant, relative to the excluded rating G, choosing to make an R rated film decreases your likelihood of reaching the 200 million dollar threshold to be identified as a Blockbuster film by 85.3%.
+
+genre_mainAdventure: holding everything else constant, relative to the excluded genre Action, choosing to make an Adventure film increases your likelihood of reaching the 200 million dollar threshold to be identified as a Blockbuster film by 52.1%.
+
+top_director: holding everything else constant, relative to the excluded bottom 90% of directors, choosing a top director (who produced the most films, in the top 10% specifically) your likelihood of reaching the 200 million dollar threshold to be identified as a Blockbuster film increases by 83.6%.
+
+e) You are worried that the predictions from the model might be overfit if you only rely on the in-sample predictions. And you’re concerned that the test set might have high variance. Therefore you decide to implement leave-one-out-cross validation to estimate the predicted probabilities (scores). Using a for loop, generate LOOCV predicted probabilities for each observation in the training set, being sure to estimate the model on every observation in the training set except that observation. Store these predictions in the vector preds_LOOCV.
+
+```{r}
+preds_LOOCV <- NULL
+num_rows <- nrow(movies_train)
+
+for(i in 1:num_rows){
+  mod <- glm(blockbuster ~ budgetM + top_director + cast_total_facebook_likes000s +
+            content_rating + genre_main,
+            family = binomial,
+            data = movies_train %>% slice(-i))
+  preds_LOOCV[i] <- predict(mod, movies_train %>% slice(i), type = "response")
+  if(i%%500 == 0)
+    {
+    cat(sprintf("Iteration: %s\n",i))
+    }
+}
+head(preds_LOOCV)
+
+preds_df_LOOCV <- data.frame(preds = preds_LOOCV,
+                             blockbuster = movies_train$blockbuster)
+head(preds_df_LOOCV)
+```
+
+f) Use the fitted model to generate predictions into the test and training sets.
+(Looking for in-sample predictions.)
+
+```{r}
+preds_train <- data.frame(preds = predict(logit_fit, movies_train, type = "response"), 
+                          blockbuster = movies_train$blockbuster)
+preds_test <- data.frame(preds = predict(logit_fit, newdata = movies_test, type = "response"), 
+                         blockbuster = movies_test$blockbuster)
+
+head(preds_train)
+head(preds_test)
+```
+
+g) Plot the three different ROC curves for the test predictions, the in-sample training predictions, and the LOOCV predictions. Describe the three ROC curves in relation to each other.
+
+ANSWER (mine): The differences between the three ROC graphs are very subtle. But the training ROC curve is the furthest up and to the left which means the model is predicting the most accurately and can best distinguish between Blockbuster and not Blockbuster. The LOOCV is second best at predicting, and the test ROC is the worst but the difference between the three curves is very slight. Since these graphs look so similar, comparing the AUC can more accurately show us how effective our models are overall and give us a numeric value for how far up/to the left our ROC curves are, so I double-checked my visual inspections of the graph with the AUC to make sure I was correct. The ROC is still a good visualization and you can easily see how your false positives and true positives change at different p-cutoffs, like for example, all our p-cutoffs are clustered toward the bottom left corner of our LOOCV ROC curve, which shows that our model isn't very sensitive.
+
+Test:
+```{r}
+library('plotROC')
+ROC_test <- ggplot(preds_test, aes(m = preds, d = blockbuster)) + 
+  geom_roc(cutoffs.at = c(.99,.9,.8,.5,.3,.1,.01)) + labs(x = "False Positive Fraction", 
+                                                          y = "True Positive Fraction",
+                                                          title = "ROC Curve, Test")
+ROC_test
+```
+
+Train:
+```{r}
+ROC_train <- ggplot(preds_train, aes(m = preds, d = blockbuster)) + 
+  geom_roc(cutoffs.at = c(.99,.9,.8,.5,.3,.1,.01)) + labs(x = "False Positive Fraction", 
+                                                          y = "True Positive Fraction",
+                                                          title = "ROC Curve, Train")
+ROC_train
+```
+
+LOOCV:
+```{r}
+ROC_LOOCV <- ggplot(preds_df_LOOCV, aes(m = preds, d = blockbuster)) + 
+  geom_roc(cutoffs.at = c(.99,.9,.8,.5,.3,.1,.01)) + labs(x = "False Positive Fraction", 
+                                                          y = "True Positive Fraction",
+                                                          title = "ROC Curve, LOOCV")
+ROC_LOOCV
+```
+
+h) Calculate the AUC for the three models. Order the models in terms of performance. Why do you suppose they are ordered as they are?
+
+Ordered by best performance to worst performance:
+```{r}
+calc_auc(ROC_train)
+calc_auc(ROC_LOOCV)
+calc_auc(ROC_test)
+```
+
+ANSWER (his): the true performance of the model is best approximated with the test set. We see it's the lowest. The in-sample performance in the training data is over-optiminstic about the model performance. The LOOCV prediction error exists somewhere between the two, but moves the in-sample predicitons in the direction of the test set.
+
+ANSWER (mine):
+The training set AUC may be high because it's a bit overfit. It's better at identifying true positives because it's built to work with the training data, so clearly it should work the best using the data it was built from. In theory, LOOCV should be the best, but that's not true in the case of this data, but it's a very close second, and that may be because the training one is overfit so the LOOCV can't compete. The test AUC is the worst performance and the least able to identify true positives, but by a very very small margin.
+
+Since something weird was going on here, I wanted to look to see if imbalanced data might be causing a problem, which ended up being the case. I created filtered dataframes, one with blockbuster movies and one without, and checked the number of rows in each. There were about 150 blockbuster movies and 3500 non-blockbuster movies. The performance of our models might be impacted by the fact that our data is really imbalanced, and the models probably aren't doing that great of a job because of it. Enter: downsampling and upsampling.
+
+```{r}
+blockbuster_tester <- movies %>% filter(grossM>=200)
+nrow(blockbuster_tester)
+notblockbuster_tester <- movies %>% filter(grossM<200)
+nrow(notblockbuster_tester)
+```
+
+i) Use the ROSE package to create a downsampled (N = 220, p = 1/2) and upsampled (N = 5000, p = 1/2) versions of the training datasets. Estimate logit models against these datasets using the specification in e).
+
+Downsampled:
+```{r}
+library(ROSE)
+rose_down <- ROSE(blockbuster ~ budgetM + top_director + cast_total_facebook_likes000s +
+            content_rating + genre_main,
+            movies_train,
+            N = 220,
+            p = 0.5)
+rose_down_logit <- glm(blockbuster ~ budgetM + top_director + cast_total_facebook_likes000s +
+                         content_rating + genre_main,
+                       data = rose_down$data,
+                       family = binomial)
+```
+
+Upsampled:
+```{r}
+rose_up <- ROSE(blockbuster ~ budgetM + top_director + cast_total_facebook_likes000s +
+            content_rating + genre_main,
+            movies_train,
+            N = 5000,
+            p = 0.5)
+rose_up_logit <- glm(blockbuster ~ budgetM + top_director + cast_total_facebook_likes000s +
+                       content_rating + genre_main,
+                     data = rose_up$data,
+                     family = binomial)
+```
+
+j) Extra credit. Create a data frame with the predicted probabilities using each of the three models above, predicted into the test set. Also calculate predicted classes using their in-sample optimal threshold. Calculate the sensitivity and specificity for each model. Describe the differences between them and compare their usefulness for the problem for a studio that wants to identify blockbuster films to promote them appropriately.
+
+##UPDATE/FINISH THIS IF TIME !!!! SOLUTION IN PACKET
+```{r}
+library('caret')
+library('data.table')
+Accuracy_Cutoff_Table <- function(predict, actual) {
+  cutoff <- seq(0.05,0.95,by=0.05)
+  
+  accuracy <- lapply(cutoff, function(c) {
+    cm_train <- confusionMatrix(factor(as.numeric(predict > c)), factor(actual))
+  
+  dt <- data.table(cutoff = c, accuracy = cm_train$overall[["Accuracy"]])
+  return(dt)
+  })
+  %>% rbindlist()
+  print(accuracy)
+}
+
+preds_reg_in 
+
+```
+
+
+
+##PROBLEM SET 7
+
+## Question 1: What predicts bike share usage?
+
+a) Navigate to the UCI Machine Learning website and download the data folder for the Bike Sharing Dataset. Read the file day.csv into R using read.csv or read_csv and store it as the object Bike_DF.
+```{r}
+Bike_DF <- read.csv(here::here("datasets","day.csv")) 
+```
+
+b) Do some basic data cleaning on Bike_DF to ensure factor variables are recorded as factors.
+
+```{r}
+library('tidyverse')
+library('forcats')
+
+Bike_DF$season <- as.factor(Bike_DF$season)
+Bike_DF$workingday <- as.factor(Bike_DF$workingday)
+Bike_DF$holiday <- as.factor(Bike_DF$holiday)
+Bike_DF$weathersit <- as.factor(Bike_DF$weathersit)
+Bike_DF$yr <- as.factor(Bike_DF$yr)
+Bike_DF$mnth <- as.factor(Bike_DF$mnth)
+Bike_DF$weekday <- as.factor(Bike_DF$weekday)
+
+#OR, his way of doing it:
+Bike_DF <- Bike_DF %>% mutate(weathersit = factor(weathersit),
+                              workingday = factor(workingday),
+                              season = factor(season),
+                              yr = factor(yr),
+                              mnth = factor(mnth),
+                              weekday = factor(weekday),
+                              )
+```
+
+c) Run the command sapply(Bike_DF, is.factor) to ensure the columns in your data frame
+that should be factors have been converted to factors appropriately.
+```{r}
+factor_test <- sapply(Bike_DF, is.factor)
+factor_test
+```
+
+d) Perform any feature transformation (creation of derived variables) that you feel is appropriate.
+
+ANSWER:
+- I removed "instant" because it was just a record of the row number basically, and that will confuse our model.
+- I removed "dteday" because dates aren't a format that will work to build a model with. Also, almost every entry is going to be different, which will confuse the model and won't be helpful.
+- I checked the ranges of the variables temp, hum, and windspeed to create Dummy variables like HotDay, ColdDay, WindyDay, etc.
+  
+```{r}
+Bike_DF <- Bike_DF %>% mutate() %>% drop_na()
+Bike_DF <- Bike_DF %>% select(-instant) 
+Bike_DF <- Bike_DF %>% select(-dteday) 
+
+range(Bike_DF$temp, na.rm = TRUE)
+range(Bike_DF$hum, na.rm = TRUE)
+range(Bike_DF$windspeed, na.rm = TRUE)
+
+Bike_DF <- Bike_DF %>% mutate(
+  HotDay = ifelse(temp > 0.7, 1, 0),
+  ColdDay = ifelse(temp < 0.2, 1, 0),
+  HumidDay = ifelse(hum > 0.9, 1, 0),
+  DryDay = ifelse(hum < 0.1, 1, 0),
+  WindyDay = ifelse(windspeed > 0.45, 1, 0)
+  )
+
+#HE DID:
+Bike_DF <- Bike_DF %>% mutate(temp_sq = temp * temp,
+                              atemp_sq = atemp * atemp,
+                              hum_sq = hum * hum,
+                              windspeed_sq = windspeed * windspeed)
+```
+
+e) Split our data into test and training splits of size 30%/70% each.
+
+```{r}
+train_idx <- sample(1:nrow(Bike_DF),size = floor(0.7*nrow(Bike_DF))) 
+bike_train <- Bike_DF %>% slice(train_idx)
+bike_test <- Bike_DF %>% slice(-train_idx)
+```
+
+f) Fit a forward stepwise linear model on the training data with cnt as your outcome variable, and season, holiday, month, workingday, weathersit, temp, hum and windspeed as your predcitor varaibles. Save this as an object fwd_fit and run the summary command over it. What are the first five variables selected?
+
+```{r}
+library(leaps)
+fwd_fit <- regsubsets(cnt ~ season + holiday + mnth + workingday + weathersit + temp + hum + windspeed,
+                      data = bike_train,
+                      method = "forward",
+                      nvmax = 20)
+summary(fwd_fit)
+```
+
+g) Fit a backwards stepwise model using the same formula and data. What are the five predictor variables included in M5? Are they the same as the M5 model from forward stepwise? Why are we not guaranteed the same variables or order of selection in forward versus backward stepwise selection?
+
+ANSWER (his): In this case, the variables are the same, but it won't always turn out that way. We aren't guarenteed the same variables/order of selection because stepwise is a non-convex optimization problem, so we're never guaranteed a global minimum
+
+ANSWER(mine, extra): or that our betas will minimize residual sum of squares. In other words, we aren't sure whether we're hitting a global minimum or a local minimum as we move through the model. It's also possible that variables can be correlated, and certain variables may have a hidden impact even if they're not in the model because they're correlated with one that is. If you drop a variable, but it's correlated with one that still is in the model or vice versa for a forward stepwise, it could still impact the model even though its been removed, and it could "help" one of the variables to remain in the model even if they aren't as explanatory as they appear. Models also choose what variables to add/remove based on a p value, so depending on our threshold of statistical significance the models may not be consistent if the p values are different between them, but in our case they should be the same because we used regsubsets to set it up.
+
+```{r}
+bck_fit <- regsubsets(cnt ~ season + holiday + mnth + workingday + weathersit + temp + hum + windspeed,
+                      data = bike_train,
+                      method = "backward")
+summary(bck_fit)
+```
+
+h) Fit a Ridge model against the bike_train dataset. Call the plot function against the fitted model to see how MSE varies as we move λ.
+
+```{r}
+library(glmnet)
+library(glmnetUtils)
+ridge_fit <- cv.glmnet(cnt ~ season + holiday + mnth + workingday + weathersit + temp + hum + windspeed,
+                       data = bike_train,
+                       alpha = 0,
+                       nfolds = 10)
+plot(ridge_fit)
+```
+
+i) What are the values for lambda.min and lambda.1se? What is the meaning of each of these lambdas?
+
+ANSWER: These lambdas decide how much we care about bias vs variance. Because our lambdas are pretty big, overall we are choosing to increase our bias a little bit in exchange for less variance. Our error minimizing lambda has more variance and less bias, and our 1 standard error lambda has more bias, but also has less variance, and is probably a better model because its more balanced. 
+```{r}
+ridge_fit$lambda.min
+ridge_fit$lambda.1se
+```
+
+j) Print the value of the coefficients at lambda.min and lambda.1se. What do you notice about the differences between the coefficients. Note: you will need to type as.matrix(coef(ridge_fit, s = "lambda.min")) to convert the coefficient vector from a sparse data matrix to a matrix.
+
+```{r}
+#min
+as.matrix(coef(ridge_fit, s = "lambda.min"))
+#1se
+as.matrix(coef(ridge_fit, s = "lambda.1se"))
+
+#He puts it into a fancy data table, that code is in the solutions
+```
+
+k) Estimate a Lasso model using the same model and data.
+```{r}
+lasso_mod <- cv.glmnet(cnt ~ season + holiday + mnth + workingday + weathersit + temp + hum + windspeed,
+                       data = bike_train,
+                       alpha = 1,
+                       nfolds = 10)
+```
+
+l) How many variables are selected by the lambda.min and lambda.1se versions of the model? Print the coefficient vectors for each.
+
+ANSWER: The lambda.1se is a more parsimonious model because it is able to predict using fewer variables.
+
+```{r}
+coef(lasso_mod, lasso_mod$lambda.1se)
+coef_mat_1se <- data.frame(rownames = rownames(coef(lasso_mod)) %>% data.frame(),
+                       coef_1se <- as.matrix(coef(lasso_mod, lasso_mod$lambda.1se)) %>% 
+                       round(3)) %>% remove_rownames() %>% rename(rownames = 1,
+                                                                  coef_1se = 2)
+coef(lasso_mod, lasso_mod$lambda.min)
+coef_mat_min <- data.frame(rownames = rownames(coef(lasso_mod)) %>% data.frame(),
+                       coef_1se <- as.matrix(coef(lasso_mod, lasso_mod$lambda.min)) %>% 
+                       round(3)) %>% remove_rownames() %>% rename(rownames = 1,
+                                                                  coef_1se = 2)
+```
+
+m) Extra Credit Discuss the differences across the ridge and lasso models. 
+Which model would you prefer to use and why?
+
+ANSWER: Ridge regressions try to make beta coefficients lower if the variables aren't as important to the model, but doesn't force them to be zero the way that Lasso regressions do. It doesn't completely eliminate them, it just minimizes their impact. Lasso models set beta coefficients to zero if the variable doesn't matter to the model, so it eliminates irrelevant variables completely. Because Lasso creates a more parsimonious model that is simpler, requires less explanatory variables to generate preditions, and just completely gets rid of whatever variables it doesn't need, I would prefer to use Lasso in this case over a Ridge regression. When you look at the coefficients for the Ridge model, you can see a wide range of values. Some coefficients, like windspeed, humidity, temp, and weathersit3 are a lot bigger than others, by thousands in some cases, which shows us that they have a much greater impact on the model. They will be the best predictors of the amount of bikes rented (cnt), so it makes sense to use Lasso because there are a few variables that matter a lot, rather than lots of variables that matter a little which would be a situation where we'd want to use Ridge regression.
+
+## PROBLEM SET 8 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+a) We’ll again use the Bike Sharing Dataset at the UCI Machine Learning website. Follow the code below to download and clean the day.csv dataset.
+
+```{r}
+set.seed(1861)
+options(scipen = 10)
+library("readr")
+Bike_DF <- read_csv(here::here("datasets","day.csv"))
+library("tidyverse")
+Bike_DF <- Bike_DF %>% mutate(weathersit = factor(weathersit),
+season = factor(season), yr = factor(yr), month = factor(mnth),
+holiday = factor(holiday), weekday = factor(weekday), workingday = factor(workingday))
+Bike_DF <- Bike_DF %>% mutate(temp_sq = temp * temp, atemp_sq = atemp * atemp, hum_sq = hum * hum, windspeed_sq = windspeed * windspeed)
+train_idx <- sample(1:nrow(Bike_DF), size = 0.8*floor(nrow(Bike_DF)))
+bike_train <- Bike_DF %>% slice(train_idx)
+bike_test <- Bike_DF %>% slice(-train_idx)
+```
+
+b) Estimate a Lasso model predicting cnt as a function of season, holiday,workingday,weathersit, temp,temp_sq,hum,hum_sq,windspeed,windspeed_sq, mnth and yr. Store this as an object lasso_fit.
+
+```{r}
+library(glmnet)
+library(glmnetUtils)
+lasso_fit <- cv.glmnet(cnt ~ season + holiday + workingday + weathersit + temp + temp_sq
+                       + hum + hum_sq + windspeed + windspeed_sq + mnth + yr,
+                       data = bike_train,
+                       alpha = 1)
+```
+
+c) Use the plot command over the fitted object. Describe the plot, being sure to label the two dashed vertical lines, and the numbers at the top of the plot.
+
+ANSWER: this plot shows cross-validated MSE vs log(lambda), and we need to take the log of lambda because that value can get really large that as lambda increases, the cross-validated MSE increases too. The dashed line on the left is the lambda that minimizes cross-validated MSE, the dashed line on the right is the lambda that is 1 standard error above the lambda that minimizes cross-validated MSE (and is usually preferred to the error-minimizing lambda), and the numbers on the top of the plot show the number of variables "selected", or the number of coefficients not set to be zero.
+
+```{r}
+plot(lasso_fit)
+```
+
+d) Use the coef() function to print the coefficients for the lasso model, being sure to use the round function to round to three digits.
+
+```{r}
+coef(lasso_fit) %>% round(3)
+```
+
+e) Print the coefficients for the lambda.min and lambda.1se versions of the model using the coef function, again rounding to the 3rd digit.
+
+```{r}
+coef(lasso_fit, lasso_fit$lambda.1se) %>% round(3)
+coef(lasso_fit, lasso_fit$lambda.min) %>% round(3)
+```
+
+f) Create a grid of alphas between 0 and 1 of length 11 using the seq function. Use the cva.glmnet function to estimate an elasticNet model using this alpha grid, the bike_train dataset and the outcome and predictors used in the Lasso model. Use the print function over this stored object to show model summary information.
+
+```{r}
+alpha_grid <- seq(0,1,length=11)
+enet_mod <- cva.glmnet(cnt ~ season + holiday + workingday + weathersit + temp + temp_sq
+                       + hum + hum_sq + windspeed + windspeed_sq + mnth + yr,
+                       data = bike_train,
+                       alpha = alpha_grid)
+print(enet_mod)
+```
+
+g) Use the minlossplot function over the elasticNet model. Describe the plot. What do you conclude from the model?
+
+ANSWER: the plot has one point for alpha = 0 (a ridge model) that has really high cross-validated error, and the rest of the values of alpha look to have about the same error. This shows us that a Ridge model performs very poorly because it has the largest cross-validated loss (or errors) by far. If we increase alpha, which increases the amount of Lasso penatly we use in the model, we create a better model. As long as we're not using Ridge, the error looks to be about the same. The best alpha seems to be 0.7.
+
+```{r}
+minlossplot(enet_mod)
+```
+
+h) In your own words, describe how a Lasso model is different from a regular OLS model.
+
+ANSWER: OLS models minimizes the distances, on average, between the line of best fit (predicted values) and the actual data points. Basically, OLS models just minimize the sum of squared error with a line of best fit and creates a linear model. OLS models can easily overfit, which isn’t as much of a problem with Lasso. Lasso models minimize residuals + lambda * absolute values of coefficients. Lasso models are able to set coefficients to zero and effectively remove them, while OLS models don’t have that capability. Lasso models can predict using less variables, which is usually better. Lasso models also penalize including additional variables/coefficients.
+
+i) Estimate a regular OLS model over the bike train dataset using the same outcome and
+predictors as before. Use the summary command over the model. Note the R2 value.
+
+```{r}
+ols_mod <- lm(cnt ~ season + holiday + workingday + weathersit + temp + temp_sq
+              + hum + hum_sq + windspeed + windspeed_sq + mnth + yr,
+              data = bike_train)
+summary(ols_mod)
+```
+
+j) Use the Lasso, ElasticNet (at optimal alpha), and OLS model to predict into the test and training sets specifying that you want to use the lambda.min for the Lasso and ElasticNet models in the predict function. Calculate R2 and RMSE. Which model performs the best?
+
+ANSWER: the OLS model performs the best. In my analysis, I wasn’t really interested in the training R2 and RMSE because the models were built using that data, so obviously the model will do a good job of predicting into that data because that’s how we taught the model what to do in the first place. I looked at the test RMSE and R2 for the three models. All of the values were very close together, so our models are performing similarly across the board, which is interesting. Surprisingly (and frustratingly), the OLS model performed the best with an RMSE of 753.0495 and R2 of 0.8435356. This sort of feels like when you get a math problem and spend hours working on it and get an answer like 0 or 1. Although Lasso and Elastic Net models are a lot more complicated, our OLS model performed the best in this case. We should consider what R2 is trying to find: R2 tells us that the model explains ___ percent of the variation in the data. It minimizes residuals. Since R2 is testing how well the model fits the data, and OLS models are literally built just to fit the data while making residuals as small as possible, it makes sense that it would do the best. The human element of all this is considering how parsimonious the model is (which would give bonus points to Lasso and Elastic Net) and deciding whether or not the model is overfit. These things matter too, and R2/RMSE shouldn’t be the end all be all.
+
+```{r}
+lasso_pred_test <- predict(lasso_fit,
+                           newdata = bike_test,
+                           s = lasso_fit$lambda.min)
+
+lasso_pred_train <- predict(lasso_fit,
+                            bike_train,
+                            s = lasso_fit$lambda.min)
+
+enet_pred_test <- predict(enet_mod,
+                          newdata = bike_test,
+                          s = lasso_fit$lambda.min,
+                          alpha = 0.7)
+
+enet_pred_train <- predict(enet_mod,
+                           bike_train,
+                           s = lasso_fit$lambda.min,
+                           alpha = 0.7)
+
+ols_pred_test <- predict(ols_mod,
+                         newdata = bike_test, type = 'response')
+
+ols_pred_train <- predict(ols_mod,
+                          newdata = bike_train, type = 'response')
+
+library("caret")
+
+#Test Lasso
+RMSE(lasso_pred_test, bike_test$cnt)
+R2(lasso_pred_test, bike_test$cnt)
+
+#Train Lasso
+RMSE(lasso_pred_train, bike_train$cnt)
+R2(lasso_pred_train,bike_train$cnt)
+
+#Test Elastic Net
+RMSE(enet_pred_test,bike_test$cnt)
+R2(enet_pred_test,bike_test$cnt)
+
+#Train Elastic Net
+RMSE(enet_pred_train,bike_train$cnt)
+R2(enet_pred_train,bike_train$cnt)
+
+#Test OLS
+RMSE(ols_pred_test,bike_test$cnt)
+R2(ols_pred_test,bike_test$cnt)
+
+#Train OLS
+RMSE(ols_pred_train,bike_train$cnt)
+R2(ols_pred_train,bike_train$cnt)
+```
+
+
+
+
+

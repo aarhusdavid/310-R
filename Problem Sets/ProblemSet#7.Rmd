@@ -1,0 +1,139 @@
+---
+title: "ProblemSet7"
+author: "David Aarhus"
+date: "4/5/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls()) #removing all variables
+```
+- instant: record index
+- dteday : date
+- season : season (1:winter, 2:spring, 3:summer, 4:fall)
+- yr : year (0: 2011, 1:2012)
+- mnth : month ( 1 to 12)
+- hr : hour (0 to 23)
+- holiday : weather day is holiday or not (extracted from [Web Link])
+- weekday : day of the week
+- workingday : if day is neither weekend nor holiday is 1, otherwise is 0.
++ weathersit :
+- 1: Clear, Few clouds, Partly cloudy, Partly cloudy
+- 2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+- 3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+- 4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+- temp : Normalized temperature in Celsius. The values are derived via (t-t_min)/(t_max-t_min), t_min=-8, t_max=+39 (only in hourly scale)
+- atemp: Normalized feeling temperature in Celsius. The values are derived via (t-t_min)/(t_max-t_min), t_min=-16, t_max=+50 (only in hourly scale)
+- hum: Normalized humidity. The values are divided to 100 (max)
+- windspeed: Normalized wind speed. The values are divided to 67 (max)
+- casual: count of casual users
+- registered: count of registered users
+- cnt: count of total rental bikes including both casual and registered
+
+
+a) Navigate to the UCI Machine Learning website and download the data folder for the Bike Sharing Dataset. Read the file day.csv into R using read.csv and store it as the object Bike_DF. Read the description to get familiar with the variables.
+```{r}
+Bike_DF <- read.csv("/Users/DavidAarhus/Documents/310 R/Datasets/day.csv")
+```
+
+b) Do some basic data cleaning on Bike_DF to ensure factor variables are recorded as factors. Then run the command sapply(Bike_DF, is.factor) to ensure the columns in your data frame that should be factors have been converted to factors appropriately. (Hint: the predictors weather situation, season,
+year, month, holiday, weekday, and workingday should be factor.)
+```{r}
+library("tidyverse")
+library("forcats")
+
+Bike_DF$season <- as.factor(Bike_DF$season)
+Bike_DF$workingday <- as.factor(Bike_DF$workingday)
+Bike_DF$holiday <- as.factor(Bike_DF$holiday)
+Bike_DF$weathersit <- as.factor(Bike_DF$weathersit)
+Bike_DF$yr <- as.factor(Bike_DF$yr)
+Bike_DF$mnth <- as.factor(Bike_DF$mnth)
+Bike_DF$weekday <- as.factor(Bike_DF$weekday)
+
+sapply(Bike_DF, is.factor)
+```
+
+c) We now perform some feature transformation (creation of derived variables). 
+```{r}
+Bike_DF <- Bike_DF %>% select(-instant)
+Bike_DF <- Bike_DF %>% select(-dteday)
+
+```
+Create 4 new variables as squared terms of temperature, feeling temperature, humidity, and windspeed. Refer to data description to find the corresponding predictors in the data.
+```{r}
+Bike_DF <- Bike_DF %>% mutate(temp_sq = temp * temp,
+                              atemp_sq = atemp * atemp,
+                              hum_sq = hum * hum,
+                              windspeed_sq = windspeed * windspeed)
+```
+
+d) Split our data into test and training splits of size 30%/70% each. Use 310 as the seed number.
+```{r}
+set.seed(310)
+train_idx <- sample(1:nrow(Bike_DF),size = 0.7*nrow(Bike_DF),replace=FALSE)
+Bike_train <- Bike_DF[train_idx,]
+Bike_test <- Bike_DF[-train_idx,]
+```
+
+e) Fit a forward stepwise linear model on the training data with cnt as your outcome variable, and season, holiday, month, workingday, weathersit, temp, atemp, hum, windspeed, and the four squared terms, as your predcitor varaibles. Set max number of variables to 20. Note we end up with more variables because of factor variables. Save this as an object fwd_fit.
+```{r}
+library("leaps")
+fwd_fit <- regsubsets(cnt ~ season + holiday + mnth + workingday + weathersit + temp + hum + windspeed,
+                      data = Bike_train,
+                      method = "forward",
+                      nvmax = 20)
+```
+f) Run the summary command over fwd_fit. What are the first five variables selected? Use the plot command to show variables selected. Hint: use scale="adjr2" to sort the models based on the adjusterd R2.
+```{r}
+summary(fwd_fit)
+```
+
+```{r}
+plot(fwd_fit, scale="adjr2")
+```
+
+g) Fit a Ridge model against the bike_train dataset. Call the plot function against the fitted model to see how MSE varies as we move λ.
+```{r}
+library("glmnet")
+library("glmnetUtils")
+ridge_fit <- cv.glmnet(cnt ~ season + holiday + mnth + workingday + weathersit + temp + hum + windspeed,
+                       data = Bike_train,
+                       alpha = 0,
+                       nfolds = 10)
+plot(ridge_fit)
+```
+
+h) What are the values for lambda.min and lambda.1se? What is the meaning of each of these lambdas?
+
+lambda.min = 118.0217
+lambda.1se = 476.4557
+
+These lambdas decide how much we care about bias vs variance. Because our lambdas are pretty big, overall we are choosing to increase our bias a little bit in exchange for less variance.
+
+i) Print the value of the coefficients at lambda.min and lambda.1se. What do you notice about the differenecs between the coefficients. (Note: you will need to type as.matrix(coef(ridge_fit, s = "lambda.min")) to convert the coefficient vector from a sparse data matrix to a matrix.
+```{r}
+#min
+as.matrix(coef(ridge_fit, s = "lambda.min"))
+```
+```{r}
+#1se
+as.matrix(coef(ridge_fit, s = "lambda.1se"))
+```
+
+j) Estimate a Lasso model using the same model and data.
+```{r}
+lasso_mod <- cv.glmnet(cnt ~ season + holiday + mnth + workingday + weathersit + temp + hum + windspeed,
+                       data = Bike_train,
+                       alpha = 1,
+                       nfolds = 10)
+```
+k) How many variables are selected by the lambda.min and lambda.1se versions of the model? Print the coefficient vectors for each.
+```{r}
+coef(lasso_mod, lasso_mod$lambda.1se)
+coef_mat_1se <- data.frame(rownames = rownames(coef(lasso_mod)) %>%   data.frame(),coef_1se <- as.matrix(coef(lasso_mod, lasso_mod$lambda.1se)) %>% round(3)) %>% remove_rownames() %>% rename(rownames = 1,coef_1se = 2)
+
+coef(lasso_mod, lasso_mod$lambda.min)
+coef_mat_min <- data.frame(rownames = rownames(coef(lasso_mod)) %>% data.frame(),coef_1se <- as.matrix(coef(lasso_mod, lasso_mod$lambda.min)) %>% round(3)) %>% remove_rownames() %>% rename(rownames = 1,coef_1se = 2)
+```
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

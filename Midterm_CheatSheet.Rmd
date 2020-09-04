@@ -1,0 +1,522 @@
+---
+title: "Midterm_CheatSheet"
+author: "David Aarhus"
+date: "4/10/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls()) #removing all variables
+library("ISLR")
+library("ggplot2")
+library("corrplot")
+library("caret")
+library("tidyverse")
+library("doBy")
+```
+
+##Definitions and Statistical Learning (Chapters 1 and 2)
+
+Statistical Learning - We believe that there is a relationship between Y and     at least one of the X’s.
+  
+What is f? - The term statistical learning refers to using the data to
+  “learn” f.
+    
+Why estimate f? - Because then we are able to predict Y with given X's.
+  
+How do we estimate f? - We must then use the training data and a statistical
+  method to estimate f. 
+    
+  Supervised Learning - It can be categorized into two groups, depending on what type the outcome is.•Regression: If the outcome is a continuous variable•Classification: If the outcome is a categorical variable.
+  
+  Unsupervised Learning - There is no outcome. Each observation records some characteristics.The goal is to infer useful patterns.
+
+  MSE - Mean Squared Error - or mean squared deviation (MSD) of an estimator (of a procedure for estimating an unobserved quantity) measures the average of the squares of the errors—that is, the average squared difference between the estimated values and the actual value. MSE is a risk function, corresponding to the expected value of the squared error loss. 
+
+Bias-variance tradeoff - High bias and low variance is not good but low bias and high Variance is not good
+
+Continuous response variable (y) versus classification problems - Linear Regression models is used for response variables. Logistic regression models are used for classification
+
+```{r}
+data(Auto)
+#names in dataset
+names(Auto)
+#stdv of variable in dataset
+sd(Auto$mpg)
+#mean of variable in dataset
+mean(Auto$mpg)
+#statistic summary of dataset
+summary(Auto)
+#create a dummy variable for logistic regression
+median(Auto$weight)
+Auto$HeavyCar <- ifelse(Auto$weight > 2500, 1, 0)
+```
+
+#Histogram, Boxplot, Scatterplot, Bar Graphs, and Correlation Plots
+```{r}
+ggplot(Auto, aes(mpg)) + 
+  geom_histogram()
+ggplot(Auto, aes(cylinders)) +
+  geom_bar()
+ggplot(Auto, aes(horsepower, mpg)) +
+  geom_point()
+ggplot(Auto, aes(mpg, horsepower)) +
+  geom_boxplot()
+
+corrplot(cor(Auto[,-9]))
+```
+
+Linear Regression - Restricting relationship between
+  predictors and outcome to be linear
+  
+Regression - Statistical process of estimating
+  relationship between an outcome and
+  one or more predictors or independent
+  variables
+
+Dependent or response variable (y) and independent, explanatory or predictor
+  variables: x1, x2, ... xp
+  
+Least squares estimates, b0, b1, ..., bp for β0, β1, ..., βp respectively, are there      that minimizing the error sum of squares, RSS (aka residual sum squares)
+
+Example of a T-test - y = 45.04  - 0.25x - 0.04x - 0.005x
+
+A t-test is a type of inferential statistic used to determine if there is a significant difference between the means of two groups, which may be related in certain features. ... A t-test is used as a hypothesis testing tool, which allows testing of an assumption applicable to a population.
+  
+  
+RSE is a measure of lack of fit of the model to the data at hand. In simplest terms, from the authors, if the RSE value is very close to to the actual outcome value, then your model fits the data well.
+
+A dummy variable (aka, an indicator variable) is a numeric variable that represents categorical data, such as gender, race, political affiliation, etc. Technically, dummy variables are dichotomous, quantitative variables. Their range of values is small; they can take on only two quantitative values. (0 or 1)
+
+#Linear Regression Model example
+```{r}
+#creates training and test sets
+set.seed(310)
+train_indx <- sample(1:nrow(Auto), 0.70 * nrow(Auto), replace=FALSE)
+Auto_train <- Auto[train_indx, ]
+Auto_test <- Auto[-train_indx, ]
+
+# lm() can automatically handle category variables "dummy variables".
+# linear model
+model <- lm(mpg ~ cylinders 
+            + horsepower 
+            + weight, Auto_train)
+
+# non-linear term model
+model2 <- lm(mpg ~ cylinders 
+            + horsepower
+            + I(horsepower^2)
+            + weight, Auto_train)
+
+#linear model, relevel function
+#mod3 <- lm(grossM ~ imdb_score + budgetM + I(budgetM^2) + relevel(rating_simple, #ref = "R"), data = movies_train)
+
+
+# prints summary of model
+summary(model)
+# for every 1 unit increase in cylinders there is a -0.2544 decrease in mpg
+# for every 1 unit increase in horsepower there is a -0.0476 decrease in mpg
+# for every 1 unit increase in weight there is a -0.0051 decrease in mpg
+```
+
+##Predictions
+```{r}
+preds_train1 <- predict(model, newdata = Auto_train)
+preds_test1 <- predict(model, newdata = Auto_test)
+
+preds_train1_df <- data.frame(true = Auto_train$mpg,
+                              pred = predict(model, newdata = Auto_train),
+                              resid = Auto_train$mpg - predict(model, newdata =  Auto_train))
+
+preds_test1_df <- data.frame(true = Auto_test$mpg,
+                              pred = predict(model, newdata = Auto_test),
+                              resid = Auto_test$mpg - predict(model, newdata = Auto_test))
+
+# Plot predictions
+ggplot(preds_train1_df, aes(x=pred, y=resid)) +
+  geom_point() + 
+  geom_smooth(se=FALSE)
+ggplot(preds_test1_df, aes(x=pred, y=resid)) +
+  geom_point() + 
+  geom_smooth(se=FALSE)
+
+# MSE for train and test
+RMSE(preds_train1_df$pred, preds_train1_df$true)
+RMSE(preds_test1_df$pred, preds_test1_df$true)
+```
+  
+If the Test RMSE is higher than the Training RMSE then that means the model is overfit
+If the Test RMSE is lower than the Training RMSE then that means the model is underfit
+
+Heteroscadasity - variables get smaller to bigger - Hetero
+Homoscadasity - variables are consistent - Homo
+Collinearity - When two variables are too closly corrlelated so it does not make sense to keep both of them in the model 
+
+The main goal of a classification problem is to identify the category/class to which a new data will fall under. ... Classification model: A classification model tries to draw some conclusion from the input values given for training. It will predict the class labels/categories for the new data.
+
+##Logistic Regression
+```{r}
+logit_fit <- glm(HeavyCar ~ mpg,
+                 family = binomial,
+                 data = Auto_train)
+```
+```{r}
+summary(logit_fit)
+```
+ every one unit increase of mpg is a -31.56% chance the car is heavy
+
+```{r}
+preds_train <- data.frame(scores = predict(logit_fit, type = "response"), Auto_train)
+# preds_train <- preds_train %>% mutate(class_pred05 = ifelse(scores>0.5,1,0))
+
+# To get the confustion Matrix
+preds_train <- data.frame(class_preds05 = ifelse(preds_train$scores > 0.5, 1, 0), preds_train)
+
+
+preds_test <- data.frame(scores = predict(logit_fit, newdata = Auto_test, type = "response"), Auto_test)
+# preds_test <- preds_test %>% mutate(class_pred05 = ifelse(scores>0.5,1,0))
+ 
+# To get the confusion Matrix                                    
+preds_test <- data.frame(class_preds05 = ifelse(preds_test$scores > 0.5, 1, 0), preds_test)
+
+
+```
+
+```{r}
+#Train confusion matrix
+table(preds_train$HeavyCar,preds_train$class_preds05)
+ 
+```
+# Train Accuracy: 225/274 = 0.821
+# Train True Positive: 156
+# Train True Negative: 69
+# Sensitivity: 156/183 = 0.852
+# Specificity: 69/91 = 0.758
+# False positive rate: 22/91 = 0.241
+
+```{r}
+#Test confusion matrix
+table(preds_test$class_preds05, preds_test$HeavyCar)
+```
+
+```{r}
+library(plotROC)
+train_ROC <- ggplot(preds_train, aes(m = scores, d = HeavyCar)) +
+  geom_roc(cutoffs.at = c(0.99,0.90,0.70,0.3,0.1,0.01))
+```
+
+```{r}
+test_ROC <- ggplot(preds_test, aes(m = scores, d = HeavyCar)) +
+  geom_roc(cutoffs.at = c(0.99,0.90,0.70,0.3,0.1,0.01))
+ 
+```
+
+```{r}
+calc_auc(train_ROC)
+calc_auc(test_ROC)
+```
+
+Resampling provides especially clear advantages when assumptions of traditional parametric tests are not met, as with small samples from non-normal distributions. Additionally, resampling can address questions that cannot be answered with traditional parametric or nonparametric methods, such as comparisons of medians or ratios.
+
+Cross Validation: Kfold and LOO Examples.
+```{r}
+# for loops in R
+# syntax:
+# for( val in sequence){
+#     statement
+#   }
+# print 1 to 10 using for
+for (i in 1:10){
+  print(i)
+}
+
+# print powers of 2 from 1 to 15
+for (i in 1:15){
+  print(2^i)
+}
+```
+
+
+Model Selection: Forward and backward stepwise
+```{r}
+#--------------------------------------
+# 2. load data
+#--------------------------------------
+# use Auto data set from ISLR package
+library(ISLR)
+data(Auto)
+
+# removing the column: name (everything else would be numeric)
+Auto_sub <- Auto[,-9]
+
+head(Auto_sub)
+
+#--------------------------------------
+# 3. LOOCV
+#--------------------------------------
+# for loop of model
+preds_LOOCV <- NULL
+# alternatively:
+# preds_LOOCV <- rep(NA,nrow(Auto_sub))
+
+# create an empty list to store models (optional)
+# mod_list <- list()
+
+for (i in 1:nrow(Auto_sub)){
+  # train the model
+  mod <- lm(mpg ~ ., data=Auto_sub[-i,]) # exclusion of ith row
+  # predict the model for the left out obs.
+  pred <- predict(mod, newdata=Auto_sub[i,]) # prediction for the ith row
+  # store the prediction
+  preds_LOOCV[i] <- pred
+  # optional: store the models
+  # mod_list[[i]] <- mod
+}
+
+# note that . can be used to represent all the variables in the regression model
+
+# train the insample model to compare the errors
+mod_insample <- lm(mpg ~ ., data = Auto_sub)
+preds_insample <- predict(mod_insample)
+
+# store the hold-out predictions and in_sample predictions
+preds_DF <- data.frame(
+  preds_LOOCV = preds_LOOCV,
+  preds_insample = preds_insample,
+  true = Auto_sub$mpg
+)
+
+# compute RMSE LOOCV 
+# use caret package
+library(caret)
+
+# RMSE for LOOCV
+RMSE(preds_DF$preds_LOOCV, preds_DF$true)
+# RMSE for insample
+RMSE(preds_DF$preds_insample, preds_DF$true)
+
+# in-sample RMSE < LOOCV RMSE
+
+#--------------------------------------
+# 4. k-fold Cross validation
+#--------------------------------------
+
+# creating folds (using createFolds from caret package)
+Auto_sub$folds <- createFolds(Auto_sub$mpg,
+                              k = 10,
+                              list = FALSE)
+
+Auto_sub$folds
+
+head(Auto_sub)
+
+### K-Fold Cross Validation
+nfolds <- 10
+# empty dataframe
+preds_10foldCV <- data.frame(
+  folds = Auto_sub$folds,
+  preds = rep(NA,nrow(Auto_sub))
+)
+
+# for loop for K-Fold CV
+for (i in 1:nfolds){
+  # train the model using all the obs except the ith group
+  mod <- lm(mpg ~ . -folds,
+            data = Auto_sub[Auto_sub$folds != i, ])
+  # prediction for the ith group
+  pred <- predict(mod, newdata=Auto_sub[Auto_sub$folds == i, ])
+  # store the predictions
+  preds_10foldCV[preds_10foldCV$folds==i, "preds"] <- pred
+}
+
+head(preds_10foldCV$preds)
+
+# compare LOOCV, K-fold CV and insample errors
+RMSE(preds_10foldCV$preds, preds_DF$true)
+
+# In-sample RMSE < LOOCV < K-fold
+```
+
+
+```{r}
+#------------------------------------------------
+### Setup
+#------------------------------------------------
+# load the movies dataset and clean the data
+options(scipen = 50)
+# make sure your working directory is set right.
+movies <- read.csv("Datasets/movie_metadata.csv")
+movies <- movies[complete.cases(movies),]
+movies <- movies[movies$budget < 400000000,]
+movies <- movies[(movies$content_rating != "" & movies$content_rating != "Not Rated"),  ]
+movies$grossM <- movies$gross/1e+6
+movies$budgetM <- movies$budget/1e+6
+movies$profitM <- movies$grossM - movies$budgetM
+movies$genre_main <- do.call('rbind',strsplit(as.character(movies$genres), '|', fixed=TRUE))[,1]
+library(forcats)
+movies$genre_main <- fct_lump(movies$genre_main,5)
+movies$content_rating <- fct_lump(movies$content_rating,3)
+movies$country <- fct_lump(movies$country,2)
+movies$cast_total_facebook_likes000s <- movies$cast_total_facebook_likes / 1000
+
+# subset the data for the columns needed for the following regression
+# profitM ~ all variables except: director_name,actor_1_name,
+#                                 actor_2_name,actor_3_name,
+#                                 plot_keywords,movie_imdb_link,
+#                                 country,budgetM,grossM, genres,
+#  
+movies_sub <- subset(movies, select=-c(director_name,actor_1_name,
+                               actor_2_name,actor_3_name,
+                               plot_keywords,movie_imdb_link,
+                               country,budgetM,grossM, genres,
+                               language, movie_title, budget, gross))
+set.seed(310)
+train_idx <- sample(1:nrow(movies_sub),size = floor(0.75*nrow(movies_sub)))
+movies_train <- movies_sub[train_idx,]
+movies_test <- movies_sub[-train_idx,]
+
+# check the dimension
+dim(movies_train)
+
+#------------------------------------------------
+### Forward Stepwise Selection
+#------------------------------------------------
+# install.packages("leaps")
+library(leaps)
+
+# train a forward stepwise model (use # of max variables = 25)
+forward_mod <- regsubsets(profitM ~ . ,
+                          data = movies_train,
+                          nvmax = 25,
+                          method = "forward")
+
+# summary of the model
+summary(forward_mod)
+# plot what variables are selected at each stage
+plot(forward_mod, scale="adjr2")
+# extract variables are selected
+reg.summary <- summary(forward_mod)
+reg.summary$which
+
+# extract the adjr2 for models from 1 to 20 variables
+reg.summary$adjr2
+
+# plot adjusted R2 against the # of variables in the model
+plot(reg.summary$adjr2, ylab="Adjusted Rsquare",
+     type = 'l', col="red")
+
+#------------------------------------------------
+### Backward Stepwise Selection
+#------------------------------------------------
+backward_mod <- regsubsets(profitM ~ .,
+                           data = movies_train,
+                           nvmax = 25,
+                           method = "backward")
+
+
+# plot the variables selected
+plot(backward_mod, scale="adjr2")
+
+
+#------------------------------------------------
+### Ridge Regression
+#------------------------------------------------
+#install.packages("glmnet")
+#install.packages("glmnetUtils")
+library(glmnet)
+library(glmnetUtils)
+
+# estimate ridge mod 
+ridge_mod <- cv.glmnet(profitM ~ .,
+                       data = movies_train,
+                       alpha = 0)
+# alpha = 0 for ridge
+# alpha = 1 for lasso
+
+# print the coefficients of the Ridge model
+coef(ridge_mod)
+
+# plot the MSE against different values of lambda
+plot(ridge_mod)
+
+# best lambda
+ridge_mod$lambda.min
+
+# lambda.1se
+ridge_mod$lambda.1se
+
+coef(ridge_mod, s=ridge_mod$lambda.1se)
+
+# explore how coefficients change as we change lambda
+# install.packages("coefplot")
+library(coefplot)
+
+# don't use the coefplot in markdown or test!
+coefpath(ridge_mod)
+
+
+#------------------------------------------------
+### Lasso Regression
+#------------------------------------------------
+
+# estimate Lasso mod 
+lasso_mod <- cv.glmnet(profitM ~ .,
+                       data = movies_train,
+                       alpha = 1)
+
+
+# print the coefficients for lambda.min and lambda.1se
+lasso_mod$lambda.min
+lasso_mod$lambda.1se
+
+
+# put in a matrix
+coef(lasso_mod, s = lasso_mod$lambda.min)
+
+coef(lasso_mod, s = lasso_mod$lambda.1se)
+
+# plot lasso mse for different values of lambda
+plot(lasso_mod)
+
+# explore how coefficients 
+# change as we change lambda
+coefpath(lasso_mod)
+
+
+#------------------------------------------------
+### A Note on glmnet for Classification
+#------------------------------------------------
+
+# If you want to use Ridge and Lasso for a classification
+# problme, you just need to enter family=binomial.
+
+# for logit
+# family = binomial
+# type.measure = 'auc'
+
+
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+```{r}
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

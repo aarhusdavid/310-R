@@ -1,0 +1,155 @@
+---
+title: "ProblemSet5"
+author: "David Aarhus"
+date: "3/15/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list = ls()) #removing all variables
+
+```
+## Question 1 
+a)
+```{r}
+movies <- read.csv("/Users/DavidAarhus/Documents/310 R/Datasets/movie_metadata.csv") 
+```
+loads dataset
+
+b)
+```{r}
+#install.packages("tidyverse")
+library("tidyverse")
+#removing missing values of budget and gross
+movies <- movies[!is.na(movies$budget),]
+movies <- movies[!is.na(movies$gross),]
+# removing empty content rating or not rated
+movies <- movies[(movies$content_rating != "" & movies$content_rating != "Not Rated"), ] # removing movies with budget > 400M
+movies <- movies[movies$budget<4e+8,]
+# simplifying variables
+movies$grossM <- movies$gross/1e+6
+movies$budgetM <- movies$budget/1e+6
+movies$profitM <- movies$grossM-movies$budgetM
+# creating new column `rating_simple` using `fct_lump` (from `tidyverse` package) # to pick 4 major levels and lump all other levels into "Other".
+movies$rating_simple <- fct_lump(movies$content_rating, n = 4)
+# creating train and test sets
+set.seed(310)
+train_indx <- sample(1:nrow(movies), 0.8 * nrow(movies), replace=FALSE)
+movies_train <- movies[train_indx, ]
+movies_test <- movies[-train_indx, ]
+
+```
+
+c)
+```{r}
+# creates a linear model using the movies_train dataset, to predict grossM
+model <- lm(grossM ~ imdb_score + budgetM, movies_train)
+# prints summary of model
+summary(model)
+```
+
+d) The coefficent of budgetM shows that for every unit increase of budgetM there is a 1.03872 unit increase in grossM. 
+
+e)
+```{r}
+model2 <- lm(grossM ~ imdb_score + budgetM + I(budgetM^2), movies_train)
+summary(model2) # prints off summary for model2
+```
+
+f)
+```{r}
+library("margins")
+m <- margins(model2, at = list(budgetM = c(25,50,75,90,100,200,300)))
+m
+```
+ANSWER: this figure shows that we have a diminishing return on investment for increasing our budget marginally. For a budget less than about 
+100 million, we'll have a good return on our investment and earn more money 
+if we increase our budget. After about 100 million (when our marginal impact dips below 1, we'll be losing money on our investment and it doesn't make sense to increase our budget anymore.
+
+## Question 2
+
+a)
+```{r}
+model3 <- lm(grossM ~ imdb_score
+             + budgetM
+             + I(budgetM^2) 
+             + relevel(rating_simple, ref = "R"), movies_train)
+summary(model3)
+```
+
+b) ANSWER: a movie with a G rating, holding budget and IMDB score fixed, will earn $29M more in gross.
+
+c)
+```{r}
+preds_train1 <- predict(model3, newdata = movies_train)
+preds_test1 <- predict(model3, newdata = movies_test)
+```
+
+d)
+```{r}
+
+preds_train1_df <- data.frame(true = movies_train$grossM,
+                              pred = predict(model3, newdata = movies_train),
+                              resid = movies_train$grossM - predict(model3, newdata = movies_train))
+
+preds_test1_df <- data.frame(true = movies_test$grossM,
+                              pred = predict(model3, newdata = movies_test),
+                              resid = movies_test$grossM - predict(model3, newdata = movies_test))
+
+```
+
+e)
+```{r}
+# heteroskedasticity - variance of error
+library(ggplot2)
+# visualize distribution of errors of residuals over prediction
+ggplot(preds_train1_df, aes(x=pred, y=resid)) +
+  geom_point() + 
+  geom_smooth(se=FALSE)
+ggplot(preds_test1_df, aes(x=pred, y=resid)) +
+  geom_point() + 
+  geom_smooth(se=FALSE)
+```
+Both Training and Test sets appear to have heteroskedasticity graphs.
+
+f)
+Training Set
+```{r}
+ggplot(preds_train1_df, aes(x = true, y = pred)) + 
+  geom_point() +
+  labs(x = "Gross in Millions, True",
+       y = "Gross in Millions, Predicted",
+       title = "Predicted vs True Values, Training") +
+  geom_abline(intercept = 0, slope = 1, 
+              color = "red", linetype = "dashed")
+```
+Test Set
+```{r}
+ggplot(preds_test1_df, aes(x = true, y = pred)) + 
+  geom_point() +
+  labs(x = "Gross in Millions, True",
+       y = "Gross in Millions, Predicted",
+       title = "Predicted vs True Values, Test")  +
+  geom_abline(intercept = 0, slope = 1, 
+              color = "red", linetype = "dashed")
+```
+
+
+g)
+```{r}
+# using caret package
+library(caret)
+# training error (root mean squared error)
+RMSE(preds_train1_df$pred, preds_train1_df$true)
+rmse_train <-   sqrt(mean((preds_train1_df$true - preds_train1_df$pred)^2))
+rmse_train
+# test error
+RMSE(preds_test1_df$pred, preds_test1_df$true)
+rmse_test <- sqrt(mean((preds_test1_df$true - preds_test1_df$pred)^2))
+rmse_test
+```
+ANSWER: Model is underfit because RMSE in the test set is lower than training RMSE.
+
+
+

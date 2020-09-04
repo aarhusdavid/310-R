@@ -1,0 +1,315 @@
+---
+title: "Final Report"
+author: "David Aarhus"
+date: "5/20/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Libraries
+```{r}
+library("tidyverse")
+library("ggplot2")
+library("caret")
+library("doBy")
+library("glmnet")
+library("glmnetUtils")
+library("leaps")
+library("plotROC")
+library("coefplot")
+```
+
+```{r}
+rm(list = ls()) #removing all variables
+```
+
+#Loads in Data
+```{r}
+suicide <- read.csv("/Users/DavidAarhus/Documents/310 R/Datasets/suicide.csv")
+names(suicide)
+```
+
+#Data Transformation
+```{r}
+#remove meaning less columns (HDI.for.year)
+suicide$HDI.for.year <- NULL
+suicide$country.year <- NULL
+#create new column (gdpM, gdpB, suicide_hvy)
+suicide$gdpM <- suicide$gdp_for_year..../1e+6
+suicide$gdpB <- suicide$gdp_for_year..../1e+9
+suicide$pop100000 <- suicide$population*1e-5
+suicide$suicide_rate_per100000capita <- suicide$pop100000/suicide$suicides_no
+
+#identified whether a country was suicide heavy or not by first running summary statistics on the dataset to find the average suicide rate for each country. This then allowed me to identify the average suicide rate for the dataset. After finding this I used a suicide rate just a tad higher than the average to identify whether a country was suicide heavy (in relation to the worldwide average)
+suicide$suicide_hvy <- ifelse(suicide$suicide_rate_per100000capita > 0.56, 1, 0)
+
+
+NaRV.omit <- function(x){
+  ## Author: Rene Locher
+  ## Version: 2005-10-17
+
+  if (is.vector(x)) {
+    if (is.numeric(x)) x <- na.omit(x[is.finite(x)]) else
+    x <- na.omit(x)
+  } else if (is.factor(x)) {
+    x <- na.omit(x)
+  } else if (is.data.frame(x)) {
+    x.num <- as.matrix(x[,sapply(x, is.numeric)])
+    ri <- (!apply(x.num, MARGIN = 1,
+                  function(x) sum(is.infinite(x))>0) &
+           !apply(x, MARGIN = 1, function(x) sum(is.na(x))>0))
+    x <- x[ri,,drop=FALSE]
+    ## class omit is incompatible with class data.frame
+    ## attributes(x) <- c(attributes(x),list(na.action=which(!ri),class="omit"))
+  } else if (is.matrix(x)) {
+    if(is.numeric(x)) {
+      ri <- !apply(x, MARGIN = 1,
+                   function(x) {sum(is.na(x)|is.infinite(x))>0})
+      x <- x[ri,,drop=FALSE]
+      attributes(x) <- c(attributes(x),list(na.action=which(!ri),class="omit"))
+    } else x <- na.omit(x)
+  } else {
+    warning("'x' is neither a vector, nor a factor, nor a data.frame nor a matrix. \n'x' is returned unchanged\n")
+    return(x)
+  }
+  return(x)
+}## NaRV.omit
+
+suicide <- NaRV.omit(suicide)
+
+```
+
+
+#Summary tables
+```{r}
+summary(suicide)
+```
+
+```{r}
+summaryBy(suicides_no ~ country, suicide, FUN = mean)
+```
+
+```{r}
+summaryBy(gdpB ~ country, suicide, FUN = mean)
+```
+
+```{r}
+summaryBy(suicides_no ~ sex, suicide, FUN = mean)
+```
+
+#GGPLOTS
+```{r}
+ggplot(suicide, aes(generation)) +
+  geom_bar(aes(fill = sex)) +
+  labs(x = " ", y = "Count", title = "Suicide Totals vs Generations")
+```
+
+```{r}
+ggplot(suicide, aes(suicides.100k.pop, gdpB)) +
+  geom_point(aes(color = age)) +
+  labs(x = "Suicides per 100k pop ", y = "GDP (Billions)", title = "GDP (Billions) vs Suicides per 100k pop")
+
+```
+
+```{r}
+ggplot(suicide, aes(year, suicides_no)) +
+  geom_point(aes(color = sex)) +
+  labs(x = "Year", y = "Suicide Count", title = "Suicides vs Year")
+
+```
+
+```{r}
+ggplot(suicide, aes(population, suicides.100k.pop )) +
+  geom_point(aes(color = generation)) +
+    labs(x = "Population", y = "Suicides per 100k pop", title = "Suicides per 100k pop Vs Population")
+```
+
+```{r}
+ggplot(suicide, aes(year, suicides.100k.pop)) +
+  geom_point(aes(color = generation)) +
+  labs(x = "Year", y = "Suicides per 100k pop", title = "Suicides per 100k pop Vs Year")
+```
+
+# Training Split
+```{r}
+set.seed(310)
+train_indx <- sample(1:nrow(suicide), 0.70 * nrow(suicide), replace=FALSE)
+suicide_train <- suicide[train_indx, ]
+suicide_test <- suicide[-train_indx, ]
+```
+
+#Linear Regression
+```{r}
+# We are using a linear model to see the affect of certain variables on the number of suicides in different countries
+Linear_mod <- lm(suicide_rate_per100000capita ~ ., suicide_train)
+summary(Linear_mod)
+```
+
+```{r}
+#This linear model helps point out the factors other than countries that play a key role in the amount of suicides
+Linear_mod_noCountries <- lm(suicide_rate_per100000capita ~ year + sex 
+                             + age + generation + country
+                             + gdpB + gdpM, suicide_train)
+summary(Linear_mod_noCountries)
+```
+
+#Linear Regression Predictions (Linear_mod_noCountries)
+```{r}
+preds_train1 <- predict(Linear_mod_noCountries, newdata = suicide_train)
+preds_test1 <- predict(Linear_mod_noCountries, newdata = suicide_test)
+
+preds_train1_df <- data.frame(true = suicide_train$suicide_rate_per100000capita,
+                              pred = predict(Linear_mod_noCountries, newdata = suicide_train),
+                              resid = suicide_train$suicide_rate_per100000capita - predict(Linear_mod_noCountries, newdata =  suicide_train))
+
+preds_test1_df <- data.frame(true = suicide_test$suicide_rate_per100000capita,
+                              pred = predict(Linear_mod_noCountries, newdata = suicide_test),
+                              resid = suicide_test$suicide_rate_per100000capita - predict(Linear_mod_noCountries, newdata = suicide_test))
+```
+
+#Linear Regression Predictions (Linear_mod)
+```{r}
+preds_train2 <- predict(Linear_mod, newdata = suicide_train)
+preds_test2 <- predict(Linear_mod, newdata = suicide_test)
+
+preds_train2_df <- data.frame(true = suicide_train$suicide_rate_per100000capita,
+                              pred = predict(Linear_mod, newdata = suicide_train),
+                              resid = suicide_train$suicide_rate_per100000capita - predict(Linear_mod, newdata =  suicide_train))
+
+preds_test2_df <- data.frame(true = suicide_test$suicide_rate_per100000capita,
+                              pred = predict(Linear_mod, newdata = suicide_test),
+                              resid = suicide_test$suicide_rate_per100000capita - predict(Linear_mod, newdata = suicide_test))
+```
+
+#Plot predictions (linear_mod_noCountries)
+```{r}
+ggplot(preds_train1_df, aes(x=pred, y=resid)) +
+  geom_point() + 
+  geom_smooth(se=FALSE)
+```
+
+```{r}
+ggplot(preds_test1_df, aes(x=pred, y=resid)) +
+  geom_point() + 
+  geom_smooth(se=FALSE)
+```
+
+#Plot predictions (linear_mod)
+```{r}
+ggplot(preds_train2_df, aes(x=pred, y=resid)) +
+  geom_point() + 
+  geom_smooth(se=FALSE)
+```
+
+```{r}
+ggplot(preds_test2_df, aes(x=pred, y=resid)) +
+  geom_point() + 
+  geom_smooth(se=FALSE)
+```
+
+#MSE for train and test (linear_mod_noCountries)
+```{r}
+RMSE(preds_train1_df$pred, preds_train1_df$true)
+```
+
+```{r}
+RMSE(preds_test1_df$pred, preds_test1_df$true)
+```
+
+## MSE for train and test (linear_mod)
+```{r}
+RMSE(preds_train2_df$pred, preds_train2_df$true)
+```
+
+```{r}
+RMSE(preds_test2_df$pred, preds_test2_df$true)
+```
+
+#Logistic Regression
+```{r}
+logit_fit <- glm(suicide_hvy ~ year + sex + age + generation + country + gdp_per_capita...., family = binomial, suicide_train)
+summary(logit_fit)
+```
+
+#Logistic Regression Predictions
+```{r}
+preds_train <- data.frame(scores = predict(logit_fit, type = "response"), suicide_train)
+preds_train <- data.frame(class_preds05 = ifelse(preds_train$scores > 0.5, 1, 0), preds_train)
+
+preds_test <- data.frame(scores = predict(logit_fit, newdata = suicide_test, type = "response"), suicide_test)
+preds_test <- data.frame(class_preds05 = ifelse(preds_test$scores > 0.5, 1, 0), preds_test)
+```
+
+#Train confusion matrix
+```{r}
+table(preds_train$suicide_hvy,preds_train$class_preds05)
+
+# Sensitivity = 0.9641
+# Specificity = 0.8621
+```
+
+#Test confusion matrix
+```{r}
+table(preds_test$suicide_hvy, preds_test$class_preds05)
+
+# Sensitivity = 0.9618
+# Specificity = 0.8646
+```
+
+#Train ROC Plot
+```{r}
+train_ROC <- ggplot(preds_train, aes(m = scores, d = suicide_hvy)) +
+  geom_roc(cutoffs.at = 0.56)
+train_ROC
+```
+
+#Test ROC Plot
+```{r}
+test_ROC <- ggplot(preds_test, aes(m = scores, d = suicide_hvy)) +
+  geom_roc(cutoffs.at = 0.56)
+test_ROC
+```
+
+#Train AUC score
+```{r}
+calc_auc(train_ROC)
+```
+
+#Test AUC score
+```{r}
+calc_auc(test_ROC)
+```
+
+#Lasso Regression
+```{r}
+# estimate Lasso mod 
+lasso_mod <- cv.glmnet(suicide_rate_per100000capita ~ .,
+                       data = suicide_train,
+                       alpha = 1)
+```
+
+```{r}
+# print the coefficients for lambda.min and lambda.1se
+lasso_mod$lambda.min
+lasso_mod$lambda.1se
+```
+
+```{r}
+# put in a matrix
+coef(lasso_mod, s = lasso_mod$lambda.min)
+coef(lasso_mod, s = lasso_mod$lambda.1se)
+```
+
+```{r}
+# plot lasso mse for different values of lambda
+plot(lasso_mod)
+```
+
+```{r}
+# explore how coefficients 
+# change as we change lambda
+coefpath(lasso_mod)
+```

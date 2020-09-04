@@ -1,0 +1,189 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
+\else % if luatex or xelatex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\usepackage{hyperref}
+\hypersetup{
+            pdftitle={HomeWork2},
+            pdfauthor={David Aarhus},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\title{HomeWork2}
+\author{David Aarhus}
+\date{2/19/2020}
+
+\begin{document}
+\maketitle
+
+\hypertarget{r-markdown}{%
+\subsection{R Markdown}\label{r-markdown}}
+
+This is an R Markdown document. Markdown is a simple formatting syntax
+for authoring HTML, PDF, and MS Word documents. For more details on
+using R Markdown see \url{http://rmarkdown.rstudio.com}.
+
+When you click the \textbf{Knit} button a document will be generated
+that includes both content as well as the output of any embedded R code
+chunks within the document. You can embed an R code chunk like this:
+
+rm(list = ls()) \#removing all variables
+
+\#Question 1a college \textless{}-
+read.csv(``/Users/DavidAarhus/Documents/310 R/Datasets/college.csv'')
+
+\#Question 1b rownames(college) = college{[},1{]} \#established the
+rownames for each college head(college)
+
+college \textless{}- college{[},-1{]} \#deletes the 1st column in the
+dataset since it \#is being used to identify the rows head(college)
+
+\#Question 1c summary(college) \#function to produce a numerical summary
+of \#the variables in the data set
+
+\#Question 1d pairs(college{[} , 1:10{]}) \#a scatterplot matrix of the
+first ten columns \#or variables of the \#data.
+
+\#Question 1e plot(college\(Private, college\)Outstate) \#function to
+produce side-by-side boxplots of \#Outstate versus Private
+
+\#Question 1f Elite \textless{}- rep(``No'',nrow(college)) \# Creates
+new Elite variable Elite{[}college\$Top10perc \textgreater{}50{]}
+\textless{}- ``Yes'' \# whether or not the proportion of students coming
+from the Elite \textless{}- as.factor(Elite) \# top 10\% of their high
+school classes exceeds 50\%. college \textless{}- data.frame(college,
+Elite) \# rerunning the college dataframe
+
+summary(college) \#gives dataframes statistics
+plot(college\(Elite, college\)Outstate) \#produces boxplot for Outstate
+and Elite
+
+\#Question 1g par(mfrow=c(2,2))
+hist(college\(Top10perc) hist(college\)Enroll)
+hist(college\(Top25perc) hist(college\)Books)
+
+\#Question 1h par(mfrow=c(1,1)) plot(college\(Apps, college\)Enroll)
+\#as applications for colleges rise so does the Enroll
+plot(college\(Apps, college\)Accept) \#more apps equal more Acceptions
+hist(college\(Enroll) #most schools enroll below 1000 students hist(college\)Room.Board)
+\#This shows a wide range between room and board for universities, with
+the average \#coming in around \$4500
+
+\#Question 2a library(``MASS'') \#Now the data set is contained in the
+object Boston. head(Boston) \#Read about the data set by ?Boston
+nrow(Boston) \#gets number of rows ncol(Boston) \#gets number of columns
+Boston \textless{}- data.frame(Boston) \#the columns give information
+about the population at Boston \#crime, indus, age, tax, race, etc
+colnames(Boston) ?Boston
+
+\#Question 2b library(``corrplot'') \#loads correlation plot
+availability corrplot(cor(Boston{[},{]})) \#creates correlation plot
+\#proportion of non-retail business acres per town and full-value
+property-tax rate per \$10,000. \#highly correlated \#index of
+accessibility to radial highways and per capita crime rate by town.
+\#highly correlated
+
+\#Question 2c \#yes, the index of accessibility to radical highways is
+correlated to the crime rate \#also, full-value property-tax rate per
+\$10,000 is correlated to crime rate
+
+\#Question 2d \# The proportion of non-retail business acres per town
+have a correlation with high taxes. (\textasciitilde{}0.6 - 0.8) \# Also
+there is an interesting correlation between lower status of the
+population and high tax rate (\textasciitilde{}0.4 - 0.6) \# The
+proportion of non-retail business acres per town also has high
+correlation with high tax rates (\textasciitilde{}0.6 - 0.8) \#
+Pupil-teacherratios is correlated with tax and rad (\textasciitilde{}0.2
+- 0.4)
+
+\#Question 2e sum(Boston{[},4{]}) \#35 uburbs in this data set bound the
+Charles river
+
+\#Question 2f median((Boston{[},4{]})) \#median is 0
+
+\#Question 2g min(Boston{[},14{]}) \#takes lowest median value of
+owner-occupied homes \# min median: 5 )
+
+(Boston{[}399,{]}) \#lists values of all the predictors for the lowest
+median of owner-occupied homes range(Boston{[},1{]}) (Boston{[}399,1{]})
+range(Boston{[},2{]}) (Boston{[}399,2{]}) range(Boston{[},3{]})
+(Boston{[}399,3{]}) range(Boston{[},4{]}) (Boston{[}399,4{]})
+range(Boston{[},5{]}) (Boston{[}399,5{]}) range(Boston{[},6{]})
+(Boston{[}399,6{]}) range(Boston{[},7{]}) (Boston{[}399,7{]})
+range(Boston{[},8{]}) (Boston{[}399,8{]}) range(Boston{[},9{]})
+(Boston{[}399,9{]}) range(Boston{[},10{]}) (Boston{[}399,10{]})
+range(Boston{[},11{]}) (Boston{[}399,11{]}) range(Boston{[},12{]})
+(Boston{[}399,12{]}) range(Boston{[},13{]}) (Boston{[}399,13{]})
+range(Boston{[},14{]}) (Boston{[}399,14{]}) \#functiions above list the
+ranges for all the predictors in the dataset \#Then I listed the value
+of the indicator with the min median Owner-occupied value \#Almost all
+the predictors were higher than most of the other observations except,
+zn, dis, and medv \#This row had the highest Bk proportion
+
+\#Questionh
+sum(Boston\(rm > 7) #how many of the suburbs average more than seven rooms per dwelling sum(Boston\)rm
+\textgreater{} 8) \#how many of the suburbs average more than eight
+rooms per dwelling Boston{[} Boston\$rm \textgreater{} 8 , {]} \#list
+values for suburbs that average more than eight rooms per dwelling
+
+\#I noticed that all of them have high bk values and low lstat values.
+
+Note that the \texttt{echo\ =\ FALSE} parameter was added to the code
+chunk to prevent printing of the R code that generated the plot.
+
+\end{document}
